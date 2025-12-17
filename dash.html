@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Pointage Complet</title>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#0e0e0e;
+  color:white;
+  margin:0;
+  padding:20px;
+}
+h1{
+  text-align:center;
+  margin-bottom:20px;
+  color:#00f0ff;
+}
+#table-container{
+  width:95%;
+  margin:auto;
+  background:#1a1a1a;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 0 15px #00f0ff33;
+}
+
+/* Barre de contrôle */
+#controls{
+  display:flex;
+  flex-wrap: wrap;
+  gap:10px;
+  justify-content: space-between;
+  margin-bottom:15px;
+}
+#controls > *{
+  flex:1;
+  min-width:120px;
+}
+button{
+  background:#00f0ff;
+  color:#000;
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+/* Tableau */
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th, td{
+  padding:10px;
+  border-bottom:1px solid #333;
+  text-align:left;
+}
+th{
+  background:#00f0ff22;
+  color:#00f0ff;
+}
+tbody tr:hover {
+  background-color:#00eeff25;
+}
+
+/* Badges */
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:12px;
+  font-weight:bold;
+  color:white;
+}
+.present{ background:#088808; }
+.absent{ background:#ff0000; }
+
+/* Mobile */
+@media(max-width:600px){
+  thead{ display:none; }
+  tr{
+    display:flex;
+    flex-direction:column;
+    background:#222;
+    margin-bottom:10px;
+    padding:10px;
+    border-radius:8px;
+  }
+  td{
+    display:flex;
+    justify-content:space-between;
+  }
+  td::before{
+    content:attr(data-label);
+    color:#00f0ff;
+    font-weight:bold;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<h1>Dashboard Pointage Complet</h1>
+
+<div id="table-container">
+
+  <div id="controls">
+    <input type="date" id="date">
+    <select id="spec">
+      <option value="">-- Spécialité --</option>
+    </select>
+    <select id="heure">
+      <option value="TOUT">TOUT</option>
+      <option>08-10</option>
+      <option>10-12</option>
+      <option>13:30-15:30</option>
+      <option>15:30-16:30</option>
+      <option>16:30-18:30</option>
+    </select>
+    <button id="filter">🔍 Filtrer</button>
+    <button id="export">📥 Export CSV</button>
+  </div>
+
+  <table id="pointage-table">
+    <thead id="table-head">
+      <tr>
+        <th colspan="6">Choisir une date et une spécialité</th>
+      </tr>
+    </thead>
+    <tbody id="data-body"></tbody>
+  </table>
+
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbytlZQ96LFIMC4LfrQ6aeKY8qrYgB_dRWNqsazP_UaiLF5yC-Ov72F7k9mxcinh88Oh/exec";
+let toutesLesDonnees = [];
+
+/* Chargement spécialités */
+async function chargerSpecialites(){
+  const res = await fetch(API_URL);
+  const data = await res.json();
+  const select = document.getElementById("spec");
+  data.specialites.forEach(s=>{
+    const o=document.createElement("option");
+    o.value=s; o.textContent=s;
+    select.appendChild(o);
+  });
+}
+
+/* Affichage tableau dynamique */
+function afficherDonnees(data){
+  const body=document.getElementById("data-body");
+  if(data.length===0){
+    document.getElementById("table-head").innerHTML=
+      `<tr><th colspan="6">Aucune donnée</th></tr>`;
+    body.innerHTML="";
+    return;
+  }
+
+  const creneaux=[...new Set(data.map(d=>d.horaire))].sort();
+  let head="<tr><th>ID</th><th>Nom</th>";
+  creneaux.forEach(c=>head+=`<th>${c}</th>`);
+  head+="</tr>";
+  document.getElementById("table-head").innerHTML=head;
+
+  const grp={};
+  data.forEach(d=>{
+    if(!grp[d.id]) grp[d.id]={nom:d.nom,etats:{}};
+    grp[d.id].etats[d.horaire]=d.etat;
+  });
+
+  let html="";
+  for(const id in grp){
+    html+=`<tr><td data-label="ID">${id}</td>
+           <td data-label="Nom">${grp[id].nom}</td>`;
+    creneaux.forEach(c=>{
+      const e=grp[id].etats[c]||"-";
+      html+=`<td data-label="${c}">
+              <span class="badge ${e.toLowerCase()}">${e}</span>
+             </td>`;
+    });
+    html+="</tr>";
+  }
+  body.innerHTML=html;
+}
+
+/* Filtre local créneau */
+function filtrerHeureLocal(data){
+  const h=document.getElementById("heure").value;
+  return h==="TOUT"?data:data.filter(d=>d.horaire===h);
+}
+
+/* Filtrage principal */
+async function filtrer(){
+  const date=document.getElementById("date").value;
+  const spec=document.getElementById("spec").value;
+  if(!date||!spec) return alert("Choisir date + spécialité");
+
+  const res=await fetch(`${API_URL}?date=${date}&spec=${encodeURIComponent(spec)}`);
+  const data=await res.json();
+  toutesLesDonnees=data.pointage||[];
+  afficherDonnees(filtrerHeureLocal(toutesLesDonnees));
+}
+
+/* Export CSV */
+document.getElementById("export").onclick=()=>{
+  if(!toutesLesDonnees.length) return;
+  const c=[...new Set(toutesLesDonnees.map(d=>d.horaire))];
+  let csv="ID,Nom,"+c.join(",")+"\n";
+  const g={};
+  toutesLesDonnees.forEach(d=>{
+    if(!g[d.id]) g[d.id]={nom:d.nom,etats:{}};
+    g[d.id].etats[d.horaire]=d.etat;
+  });
+  for(const id in g){
+    let l=id+","+g[id].nom;
+    c.forEach(h=>l+=","+(g[id].etats[h]||"-"));
+    csv+=l+"\n";
+  }
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv"}));
+  a.download="pointage_"+(spec.value)+"_"+(date.value)+".csv";
+  a.click();
+};
+
+document.getElementById("filter").onclick=filtrer;
+document.getElementById("heure").onchange=()=>afficherDonnees(filtrerHeureLocal(toutesLesDonnees));
+chargerSpecialites();
+</script>
+
+</body>
+</html>

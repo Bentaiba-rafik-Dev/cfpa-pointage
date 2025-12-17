@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pointage des Stagiaires</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* --- Global --- */
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0d0d0d;
+  margin: 0;
+  padding: 0;
+  color: #fff;
+}
+header {
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.5rem;
+  text-shadow: 0 0 5px #fff;
+}
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* --- Cartes --- */
+.card {
+  background: rgba(20, 20, 30, 0.9);
+  border: 1px solid #00ffff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 0 10px #00ffff;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 0 20px #00ffff;
+}
+.card img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.5rem;
+  border: 2px solid #00ffff;
+  box-shadow: 0 0 5px #00ffff;
+}
+.card h3, .card p {
+  margin: 0.25rem 0;
+}
+
+/* --- Badge absent --- */
+.badge-absent {
+  background: #ff0044;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  box-shadow: 0 0 10px #ff0044;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 10px #ff0044; }
+  50% { box-shadow: 0 0 20px #ff0044; }
+  100% { box-shadow: 0 0 10px #ff0044; }
+}
+
+/* --- Boutons --- */
+.buttons {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
+  transition: 0.3s;
+}
+.btn.present { background-color: #22c55e; box-shadow: 0 0 5px #22c55e, 0 0 10px #22c55e; }
+.btn.absent { background-color: #ef4444; box-shadow: 0 0 5px #ef4444, 0 0 10px #ef4444; }
+.btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff;
+}
+.selected { 
+  border: white 2px solid;
+  box-shadow: 0 0 10px #e3eff1;
+ }
+
+/* --- Submit --- */
+#submit-btn {
+  display: block;
+  margin: 1rem auto;
+  padding: 0.75rem 2rem;
+  background: #00ffff;
+  color: #0d0d0d;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+  transition: 0.3s;
+}
+#submit-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+}
+
+/* --- Info --- */
+@media(max-width:500px){ .buttons{ flex-direction: column; } }
+.info { text-align:center; color:#aaa; margin-top:.5rem; font-size:.95rem; }
+
+/* --- Toasts --- */
+#toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.toast {
+  background: rgba(0,0,0,0.9);
+  color: #fff;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #00ffff;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateX(100%);
+  animation: slideIn 0.5s forwards, fadeOut 0.5s 3s forwards;
+}
+.toast.success { border-left: 5px solid #22c55e; }
+.toast.error { border-left: 5px solid #ef4444; }
+
+@keyframes slideIn {
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateX(100%); }
+}
+</style>
+</head>
+<body>
+<header></header>
+
+<div class="container" id="students-container"></div>
+<div class="info">Sélectionne les statuts puis clique <strong>Envoyer tout</strong>.</div>
+<button id="submit-btn">Envoyer tout</button>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYixb1iPxfJWPouGnjNPjBrUjMPxScYsETMnnOoJaB9xsa1u7nbY2m7527F-XtjqYV/exec";
+const urlParams = new URLSearchParams(window.location.search);
+const TOKEN = urlParams.get('token');
+
+if(!TOKEN){ showToast('Aucun token trouvé dans l’URL !', 'error'); }
+
+let students = [];
+let attendanceData = {};
+
+// --- Fonctions Toast ---
+function showToast(message, type='success'){
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+}
+
+// --- Charger la liste via token ---
+fetch(`${SCRIPT_URL}?token=${TOKEN}`)
+  .then(res => res.json())
+  .then(data => {
+    if(!data.ok){ showToast('Erreur : ' + data.error, 'error'); return; }
+    students = data.students.map(s => ({ ...s, status: null }));
+
+    const titre = document.querySelector('header');
+    titre.textContent = students.length > 0 
+        ? `Pointage des Stagiaires (${students.length}) - Spécialité : ${data.specialite}`
+        : 'Aucun stagiaire trouvé pour cette spécialité';
+
+    afficherStudents();
+  })
+  .catch(err => {
+    console.error("Erreur fetch liste :", err);
+    showToast('Erreur chargement liste (voir console).', 'error');
+  });
+
+// --- Vérifier si tous les stagiaires sont validés ---
+function tousValides() {
+    return students.every(stg => stg.status !== null);
+}
+
+// --- Gestion des créneaux ---
+function getCreneau() {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const totalMinutes = h * 60 + m;
+
+    if(totalMinutes >= 480 && totalMinutes < 600) return "08-10";
+    if(totalMinutes >= 600 && totalMinutes < 720) return "10-12";
+    if(totalMinutes >= 810 && totalMinutes < 930) return "13:30-15:30";
+    if(totalMinutes >= 930 && totalMinutes < 990) return "15:30-16:30";
+    if(totalMinutes >= 990 && totalMinutes < 1110) return "16:30-18:30";
+    return "Hors créneau";
+}
+
+// --- Affichage des étudiants ---
+function afficherStudents() {
+  const container = document.getElementById('students-container');
+  container.innerHTML = '';
+  
+  students.forEach(student => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const photo = student.img === 'H' ? 'avatar.webp' : 'avatar-femme.webp';
+
+    card.innerHTML = `
+      ${student.dernierStatut === "Absent" ? `<span class="badge-absent">Absent la dernière fois</span>` : ""}
+      <img src="${photo}" alt="${student.nom}">
+      <h3>${student.nom}</h3>
+      <div class="buttons">
+        <button class="btn present">Présent</button>
+        <button class="btn absent">Absent</button>
+      </div>
+    `;
+    container.appendChild(card);
+
+    card.querySelector('.present').addEventListener('click', () => mark(student, 'Present', card));
+    card.querySelector('.absent').addEventListener('click', () => mark(student, 'Absent', card));
+  });
+}
+
+// --- Marquer la présence ---
+function mark(student, status, card){
+  card.querySelectorAll('.btn').forEach(btn => btn.classList.remove('selected'));
+  card.querySelector(`.${status === 'Present' ? 'present' : 'absent'}`).classList.add('selected');
+
+  student.status = status;
+
+  const now = new Date();
+  attendanceData[student.matricule] = {
+    matricule: student.matricule,
+    nom: student.nom,
+    specialite: student.specialite,
+    date: now.toLocaleDateString(),
+    heure: getCreneau(),
+    status: status
+  };
+}
+
+// --- Envoi des données avec anti-double clic ---
+const submitBtn = document.getElementById('submit-btn');
+
+submitBtn.addEventListener('click', () => {
+  if (submitBtn.disabled) return;
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Envoi...";
+  submitBtn.style.opacity = "0.6";
+  submitBtn.style.cursor = "not-allowed";
+
+  const dataToSend = Object.values(attendanceData);
+
+  if(dataToSend.length === 0){
+    showToast('Aucune présence sélectionnée !', 'error');
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Envoyer tout";
+    submitBtn.style.opacity = "1";
+    submitBtn.style.cursor = "pointer";
+    return;
+  }
+
+  if (!tousValides()) {
+      showToast("⚠️ Vous devez marquer tous les stagiaires : Présent OU Absent.", 'error');
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Envoyer tout";
+      submitBtn.style.opacity = "1";
+      submitBtn.style.cursor = "pointer";
+      return;
+  }
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(dataToSend)
+  }).then(() => {
+    showToast('Présences envoyées !', 'success');
+    attendanceData = {};
+    location.reload();
+  }).catch(err => {
+    console.warn('Erreur POST :', err);
+    showToast('Erreur lors de l’envoi !', 'error');
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Envoyer tout";
+    submitBtn.style.opacity = "1";
+    submitBtn.style.cursor = "pointer";
+  });
+});
+</script>
+</body>
+</html>
