@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Pointage Complet</title>
+<title>Dashboard Pointage — Période</title>
 
 <style>
 body{
@@ -26,8 +26,6 @@ h1{
   border-radius:12px;
   box-shadow:0 0 15px #00f0ff33;
 }
-
-/* Barre de contrôle */
 #controls{
   display:flex;
   flex-wrap: wrap;
@@ -48,26 +46,27 @@ button{
   cursor:pointer;
   font-weight:bold;
 }
-
-/* Tableau */
+/* Conteneur scroll */
+.table-wrapper{
+  overflow-x:auto;
+}
 table{
-  width:100%;
   border-collapse:collapse;
+  min-width:800px; /* minimum pour éviter rétrécissement trop fort */
 }
 th, td{
   padding:10px;
-  border-bottom:1px solid #333;
-  text-align:left;
+  border:1px solid #333;
+  text-align:center;
+  white-space:nowrap;
 }
-th{
+thead th{
   background:#00f0ff22;
+  border-color: aliceblue;
   color:#00f0ff;
 }
-tbody tr:hover {
-  background-color:#00eeff25;
-}
+tbody tr:hover { background-color:#00eeff25; }
 
-/* Badges */
 .badge{
   display:inline-block;
   padding:4px 10px;
@@ -78,8 +77,9 @@ tbody tr:hover {
 .present{ background:#088808; }
 .absent{ background:#ff0000; }
 
-/* Mobile */
+/* Mobile responsive */
 @media(max-width:600px){
+  .table-wrapper{ overflow-x:auto; }
   thead{ display:none; }
   tr{
     display:flex;
@@ -104,12 +104,13 @@ tbody tr:hover {
 
 <body>
 
-<h1>Dashboard Pointage Complet</h1>
+<h1>Dashboard Pointage — Période</h1>
 
 <div id="table-container">
 
   <div id="controls">
-    <input type="date" id="date">
+    <input type="date" id="start">
+    <input type="date" id="end">
     <select id="spec">
       <option value="">-- Spécialité --</option>
     </select>
@@ -118,29 +119,27 @@ tbody tr:hover {
       <option>08-10</option>
       <option>10-12</option>
       <option>13:30-15:30</option>
-      <option>15:30-16:30</option>
-      <option>16:30-18:30</option>
     </select>
     <button id="filter">🔍 Filtrer</button>
     <button id="export">📥 Export CSV</button>
   </div>
 
-  <table id="pointage-table">
-    <thead id="table-head">
-      <tr>
-        <th colspan="6">Choisir une date et une spécialité</th>
-      </tr>
-    </thead>
-    <tbody id="data-body"></tbody>
-  </table>
+  <div class="table-wrapper">
+    <table>
+      <thead id="table-head">
+        <tr><th colspan="2">Choisir période + spécialité</th></tr>
+      </thead>
+      <tbody id="data-body"></tbody>
+    </table>
+  </div>
 
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbytlZQ96LFIMC4LfrQ6aeKY8qrYgB_dRWNqsazP_UaiLF5yC-Ov72F7k9mxcinh88Oh/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxDSftK4a-I5KUmEwDxu7jdZib7b3muz9HhjS0LFEZTAvydxgsRDzMweTA-dbdytk1G9Q/exec";
 let toutesLesDonnees = [];
+const creneaux=["08-10","10-12","13:30-15:30"];
 
-/* Chargement spécialités */
 async function chargerSpecialites(){
   const res = await fetch(API_URL);
   const data = await res.json();
@@ -152,7 +151,6 @@ async function chargerSpecialites(){
   });
 }
 
-/* Affichage tableau dynamique */
 function afficherDonnees(data){
   const body=document.getElementById("data-body");
   if(data.length===0){
@@ -162,74 +160,78 @@ function afficherDonnees(data){
     return;
   }
 
-  const creneaux=[...new Set(data.map(d=>d.horaire))].sort();
-  let head="<tr><th>ID</th><th>Nom</th>";
-  creneaux.forEach(c=>head+=`<th>${c}</th>`);
+  const dates=[...new Set(data.map(d=>d.date))].sort((a,b)=>{
+    return new Date(a.split("/").reverse().join("-")) - new Date(b.split("/").reverse().join("-"));
+  });
+
+  let head = "<tr><th rowspan='2'>Nom</th>";
+  dates.forEach(d=>{
+    head+=`<th colspan="${creneaux.length}">${d}</th>`;
+  });
+  head+="</tr><tr>";
+  dates.forEach(_=>creneaux.forEach(c=>{
+    head+=`<th>${c}</th>`;
+  }));
   head+="</tr>";
   document.getElementById("table-head").innerHTML=head;
 
   const grp={};
   data.forEach(d=>{
     if(!grp[d.id]) grp[d.id]={nom:d.nom,etats:{}};
-    grp[d.id].etats[d.horaire]=d.etat;
+    grp[d.id].etats[d.date+"_"+d.horaire]=d.etat;
   });
 
   let html="";
   for(const id in grp){
-    html+=`<tr><td data-label="ID">${id}</td>
-           <td data-label="Nom">${grp[id].nom}</td>`;
-    creneaux.forEach(c=>{
-      const e=grp[id].etats[c]||"-";
-      html+=`<td data-label="${c}">
-              <span class="badge ${e.toLowerCase()}">${e}</span>
-             </td>`;
+    html+=`<tr><td>${grp[id].nom}</td>`;
+    dates.forEach(d=>{
+      creneaux.forEach(c=>{
+        const key=d+"_"+c;
+        const e=grp[id].etats[key]||"-";
+        html+=`<td><span class="badge ${e.toLowerCase()}">${e}</span></td>`;
+      });
     });
     html+="</tr>";
   }
   body.innerHTML=html;
 }
 
-/* Filtre local créneau */
 function filtrerHeureLocal(data){
   const h=document.getElementById("heure").value;
   return h==="TOUT"?data:data.filter(d=>d.horaire===h);
 }
 
-/* Filtrage principal */
 async function filtrer(){
-  const date=document.getElementById("date").value;
+  const start=document.getElementById("start").value;
+  const end=document.getElementById("end").value;
   const spec=document.getElementById("spec").value;
-  if(!date||!spec) return alert("Choisir date + spécialité");
 
-  const res=await fetch(`${API_URL}?date=${date}&spec=${encodeURIComponent(spec)}`);
+  if(!start||!end||!spec){
+    alert("Choisir dates + spécialité");
+    return;
+  }
+
+  const res=await fetch(`${API_URL}?start=${start}&end=${end}&spec=${encodeURIComponent(spec)}`);
   const data=await res.json();
   toutesLesDonnees=data.pointage||[];
   afficherDonnees(filtrerHeureLocal(toutesLesDonnees));
 }
 
-/* Export CSV */
+document.getElementById("filter").onclick=filtrer;
+document.getElementById("heure").onchange=()=>afficherDonnees(filtrerHeureLocal(toutesLesDonnees));
+
 document.getElementById("export").onclick=()=>{
   if(!toutesLesDonnees.length) return;
-  const c=[...new Set(toutesLesDonnees.map(d=>d.horaire))];
-  let csv="ID,Nom,"+c.join(",")+"\n";
-  const g={};
+  let csv="ID,Nom,Date,Heure,Etat\n";
   toutesLesDonnees.forEach(d=>{
-    if(!g[d.id]) g[d.id]={nom:d.nom,etats:{}};
-    g[d.id].etats[d.horaire]=d.etat;
+    csv+=`${d.id},${d.nom},${d.date},${d.horaire},${d.etat}\n`;
   });
-  for(const id in g){
-    let l=id+","+g[id].nom;
-    c.forEach(h=>l+=","+(g[id].etats[h]||"-"));
-    csv+=l+"\n";
-  }
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv"}));
-  a.download="pointage_"+(spec.value)+"_"+(date.value)+".csv";
+  a.download="pointage_periode.csv";
   a.click();
 };
 
-document.getElementById("filter").onclick=filtrer;
-document.getElementById("heure").onchange=()=>afficherDonnees(filtrerHeureLocal(toutesLesDonnees));
 chargerSpecialites();
 </script>
 
