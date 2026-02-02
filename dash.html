@@ -3,236 +3,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Pointage — Période</title>
+<title>Dashboard Pointage</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-body{
-  font-family: Arial, sans-serif;
-  background:#0e0e0e;
-  color:white;
-  margin:0;
-  padding:20px;
+:root{
+--primary:#00f0ff;--bg:#0e0e0e;--card:#1a1a1a;
+--danger:#ff4d4d;--success:#00ff00;
 }
-h1{
-  text-align:center;
-  margin-bottom:20px;
-  color:#00f0ff;
-}
-#table-container{
-  width:95%;
-  margin:auto;
-  background:#1a1a1a;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 0 15px #00f0ff33;
-}
-#controls{
-  display:flex;
-  flex-wrap: wrap;
-  gap:10px;
-  justify-content: space-between;
-  margin-bottom:15px;
-}
-#controls > *{
-  flex:1;
-  min-width:120px;
-}
-button{
-  background:#00f0ff;
-  color:#000;
-  padding:10px 20px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:bold;
-}
-/* Conteneur scroll */
-.table-wrapper{
-  overflow-x:auto;
-}
-table{
-  border-collapse:collapse;
-  min-width:800px; /* minimum pour éviter rétrécissement trop fort */
-}
-th, td{
-  padding:10px;
-  border:1px solid #333;
-  text-align:center;
-  white-space:nowrap;
-}
-thead th{
-  background:#00f0ff22;
-  border-color: aliceblue;
-  color:#00f0ff;
-}
-tbody tr:hover { background-color:#00eeff25; }
 
-.badge{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:12px;
-  font-weight:bold;
-  color:white;
-}
-.present{ background:#088808; }
-.absent{ background:#ff0000; }
+body{font-family:Segoe UI,sans-serif;background:var(--bg);color:#fff;margin:0;padding:20px}
+h1{text-align:center;color:var(--primary)}
 
-/* Mobile responsive */
-@media(max-width:600px){
-  .table-wrapper{ overflow-x:auto; }
-  thead{ display:none; }
-  tr{
-    display:flex;
-    flex-direction:column;
-    background:#222;
-    margin-bottom:10px;
-    padding:10px;
-    border-radius:8px;
-  }
-  td{
-    display:flex;
-    justify-content:space-between;
-  }
-  td::before{
-    content:attr(data-label);
-    color:#00f0ff;
-    font-weight:bold;
-  }
+#table-container{width:98%;margin:auto;background:var(--card);padding:20px;border-radius:12px}
+#controls{display:flex;flex-wrap:wrap;gap:10px;background:#222;padding:15px;border-radius:8px;position:sticky;top:0;z-index:100}
+
+input,select,button{background:#333;border:1px solid #444;color:white;padding:10px;border-radius:6px}
+button{background:var(--primary);color:#000;font-weight:bold;border:none;cursor:pointer}
+.btn-excel{background:#217346;color:#fff;margin-left:auto}
+
+#loader{
+display:none;margin:20px auto;width:50px;height:50px;
+border:5px solid rgba(0,240,255,.1);
+border-top:5px solid var(--primary);
+border-radius:50%;animation:spin 1s linear infinite
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.table-wrapper{overflow-x:auto;border:1px solid #333}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th,td{padding:12px;border:1px solid #333;white-space:nowrap;text-align:center;background:var(--card)}
+
+/* Header ligne 1 (dates) */
+thead tr:first-child th{position:sticky;top:0;z-index:20;background:#222}
+
+/* Header ligne 2 (08-10…) */
+thead tr:nth-child(2) th{position:sticky;top:48px;z-index:10;background:#1f1f1f}
+
+/* Colonne NOM */
+tbody td:first-child{
+position:sticky;left:0;z-index:5;background:#1a1a1a;
+border-right:3px solid var(--primary);text-align:left;min-width:200px
+}
+
+/* Coins */
+thead tr:first-child th:first-child{left:0;z-index:30}
+thead tr:nth-child(2) th:first-child{left:0;z-index:25}
+
+.badge{padding:5px 10px;border-radius:4px;font-weight:bold}
+.color-present{color:var(--success);border:1px solid var(--success);background:rgba(0,255,0,.1)}
+.color-absent{color:var(--danger);border:1px solid var(--danger);background:rgba(255,77,77,.1)}
+.stg-link{cursor:pointer;color:var(--primary);text-decoration:underline}
+
+/* Popup */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999}
+#modal{
+display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+background:#222;padding:30px;border-radius:15px;border:2px solid var(--primary);
+z-index:1000;text-align:center
 }
 </style>
 </head>
 
 <body>
 
-<h1>Dashboard Pointage — Période</h1>
+<h1>Dashboard Pointage</h1>
 
 <div id="table-container">
+<div id="controls">
+<input type="date" id="start">
+<input type="date" id="end">
+<select id="spec"><option value="">-- Spécialité --</option></select>
+<select id="heure">
+<option value="TOUT">Toutes les heures</option>
+<option>08-10</option>
+<option>10-12</option>
+<option>13:30-15:30</option>
+</select>
+<input id="search" placeholder="Nom...">
+<button id="filter">🔍 FILTRER</button>
+<button class="btn-excel" onclick="exportToExcel()">📊 EXPORT</button>
+</div>
 
-  <div id="controls">
-    <input type="date" id="start">
-    <input type="date" id="end">
-    <select id="spec">
-      <option value="">-- Spécialité --</option>
-    </select>
-    <select id="heure">
-      <option value="TOUT">TOUT</option>
-      <option>08-10</option>
-      <option>10-12</option>
-      <option>13:30-15:30</option>
-    </select>
-    <button id="filter">🔍 Filtrer</button>
-    <button id="export">📥 Export CSV</button>
-  </div>
+<div id="loader"></div>
 
-  <div class="table-wrapper">
-    <table>
-      <thead id="table-head">
-        <tr><th colspan="2">Choisir période + spécialité</th></tr>
-      </thead>
-      <tbody id="data-body"></tbody>
-    </table>
-  </div>
+<div class="table-wrapper">
+<table id="main-table">
+<thead id="table-head"></thead>
+<tbody id="data-body"></tbody>
+</table>
+</div>
+</div>
 
+<div id="overlay"></div>
+<div id="modal">
+<h2 id="m-nom"></h2>
+<p>Présences: <span id="m-pres" style="color:var(--success)"></span></p>
+<p>Absences: <span id="m-abs" style="color:var(--danger)"></span></p>
+<p>Taux: <span id="m-taux"></span>%</p>
+<button onclick="closeModal()">Fermer</button>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxDSftK4a-I5KUmEwDxu7jdZib7b3muz9HhjS0LFEZTAvydxgsRDzMweTA-dbdytk1G9Q/exec";
-let toutesLesDonnees = [];
+const API_URL="https://script.google.com/macros/s/AKfycbxDSftK4a-I5KUmEwDxu7jdZib7b3muz9HhjS0LFEZTAvydxgsRDzMweTA-dbdytk1G9Q/exec";
+let toutesLesDonnees=[];
 const creneaux=["08-10","10-12","13:30-15:30"];
 
-async function chargerSpecialites(){
-  const res = await fetch(API_URL);
-  const data = await res.json();
-  const select = document.getElementById("spec");
-  data.specialites.forEach(s=>{
-    const o=document.createElement("option");
-    o.value=s; o.textContent=s;
-    select.appendChild(o);
-  });
-}
-
-function afficherDonnees(data){
-  const body=document.getElementById("data-body");
-  if(data.length===0){
-    document.getElementById("table-head").innerHTML=
-      `<tr><th colspan="6">Aucune donnée</th></tr>`;
-    body.innerHTML="";
-    return;
-  }
-
-  const dates=[...new Set(data.map(d=>d.date))].sort((a,b)=>{
-    return new Date(a.split("/").reverse().join("-")) - new Date(b.split("/").reverse().join("-"));
-  });
-
-  let head = "<tr><th rowspan='2'>Nom</th>";
-  dates.forEach(d=>{
-    head+=`<th colspan="${creneaux.length}">${d}</th>`;
-  });
-  head+="</tr><tr>";
-  dates.forEach(_=>creneaux.forEach(c=>{
-    head+=`<th>${c}</th>`;
-  }));
-  head+="</tr>";
-  document.getElementById("table-head").innerHTML=head;
-
-  const grp={};
-  data.forEach(d=>{
-    if(!grp[d.id]) grp[d.id]={nom:d.nom,etats:{}};
-    grp[d.id].etats[d.date+"_"+d.horaire]=d.etat;
-  });
-
-  let html="";
-  for(const id in grp){
-    html+=`<tr><td>${grp[id].nom}</td>`;
-    dates.forEach(d=>{
-      creneaux.forEach(c=>{
-        const key=d+"_"+c;
-        const e=grp[id].etats[key]||"-";
-        html+=`<td><span class="badge ${e.toLowerCase()}">${e}</span></td>`;
-      });
-    });
-    html+="</tr>";
-  }
-  body.innerHTML=html;
-}
-
-function filtrerHeureLocal(data){
-  const h=document.getElementById("heure").value;
-  return h==="TOUT"?data:data.filter(d=>d.horaire===h);
+async function chargerInitial(){
+const r=await fetch(API_URL);
+const d=await r.json();
+d.specialites.forEach(s=>spec.add(new Option(s,s)));
 }
 
 async function filtrer(){
-  const start=document.getElementById("start").value;
-  const end=document.getElementById("end").value;
-  const spec=document.getElementById("spec").value;
-
-  if(!start||!end||!spec){
-    alert("Choisir dates + spécialité");
-    return;
-  }
-
-  const res=await fetch(`${API_URL}?start=${start}&end=${end}&spec=${encodeURIComponent(spec)}`);
-  const data=await res.json();
-  toutesLesDonnees=data.pointage||[];
-  afficherDonnees(filtrerHeureLocal(toutesLesDonnees));
+loader.style.display="block";
+const r=await fetch(`${API_URL}?start=${start.value}&end=${end.value}&spec=${spec.value}`);
+const d=await r.json();
+toutesLesDonnees=d.pointage||[];
+loader.style.display="none";
+appliquerFiltres();
 }
 
-document.getElementById("filter").onclick=filtrer;
-document.getElementById("heure").onchange=()=>afficherDonnees(filtrerHeureLocal(toutesLesDonnees));
+function appliquerFiltres(){
+let d=toutesLesDonnees;
+if(heure.value!=="TOUT") d=d.filter(x=>x.horaire===heure.value);
+if(search.value) d=d.filter(x=>x.nom.toLowerCase().includes(search.value.toLowerCase()));
+afficherDonnees(d);
+}
 
-document.getElementById("export").onclick=()=>{
-  if(!toutesLesDonnees.length) return;
-  let csv="ID,Nom,Date,Heure,Etat\n";
-  toutesLesDonnees.forEach(d=>{
-    csv+=`${d.id},${d.nom},${d.date},${d.horaire},${d.etat}\n`;
-  });
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv"}));
-  a.download="pointage_periode.csv";
-  a.click();
-};
+function afficherDonnees(data){
+const head=document.getElementById("table-head");
+const body=document.getElementById("data-body");
+if(!data.length){head.innerHTML="<tr><th>Aucune donnée</th></tr>";body.innerHTML="";return;}
 
-chargerSpecialites();
+const dates=[...new Set(data.map(x=>x.date))];
+
+let h=`<tr><th rowspan="2">Nom</th>`;
+dates.forEach(d=>h+=`<th colspan="3">${d}</th>`);
+h+=`</tr><tr>`;
+dates.forEach(()=>creneaux.forEach(c=>h+=`<th>${c}</th>`));
+head.innerHTML=h;
+
+const grp={};
+data.forEach(d=>{
+if(!grp[d.id]) grp[d.id]={nom:d.nom,id:d.id,etats:{}};
+grp[d.id].etats[d.date+"_"+d.horaire]=d.etat;
+});
+
+body.innerHTML=Object.values(grp).map(g=>{
+let r=`<tr><td class="stg-link" onclick="voirDetails('${g.id}')">${g.nom}</td>`;
+dates.forEach(d=>creneaux.forEach(c=>{
+const e=(g.etats[d+"_"+c]||"-").trim();
+let css="";
+if(e.toLowerCase().includes("présent")||e.toLowerCase().includes("present")) css="color-present";
+else if(e.toLowerCase().includes("absent")) css="color-absent";
+r+=`<td><span class="badge ${css}">${e}</span></td>`;
+}));
+return r+="</tr>";
+}).join("");
+}
+
+function voirDetails(id){
+const stats=toutesLesDonnees.filter(d=>d.id==id);
+const pres=stats.filter(d=>d.etat.toLowerCase().includes("présent")||d.etat.toLowerCase().includes("present")).length;
+const abs=stats.filter(d=>d.etat.toLowerCase().includes("absent")).length;
+const taux=(pres+abs)>0?((pres/(pres+abs))*100).toFixed(1):0;
+document.getElementById("m-nom").textContent=stats[0].nom;
+document.getElementById("m-pres").textContent=pres;
+document.getElementById("m-abs").textContent=abs;
+document.getElementById("m-taux").textContent=taux;
+modal.style.display="block";overlay.style.display="block";
+}
+
+function closeModal(){modal.style.display="none";overlay.style.display="none"}
+
+function exportToExcel(){
+XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("main-table")),"Pointage.xlsx");
+}
+
+chargerInitial();
+filter.onclick=filtrer;
+search.oninput=appliquerFiltres;
+heure.onchange=appliquerFiltres;
+overlay.onclick=closeModal;
 </script>
 
 </body>
