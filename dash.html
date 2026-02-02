@@ -112,7 +112,7 @@ const creneaux=["08-10","10-12","13:30-15:30"];
 async function chargerInitial(){
 const r=await fetch(API_URL);
 const d=await r.json();
-d.specialites.forEach(s=>spec.add(new Option(s,s)));
+if(d.specialites) d.specialites.forEach(s=>spec.add(new Option(s,s)));
 }
 
 async function filtrer(){
@@ -139,7 +139,14 @@ if(!data.length){head.innerHTML="<tr><th>Aucune donnée</th></tr>";body.innerHTM
 const dates=[...new Set(data.map(x=>x.date))];
 
 let h=`<tr><th rowspan="2">Nom</th>`;
-dates.forEach(d=>h+=`<th colspan="3">${d}</th>`);
+dates.forEach(d=>{
+    // Utilisation de split pour éviter les erreurs de décalage de fuseau horaire
+    const parts = d.split('/');
+    // On suppose le format JJ/MM/AAAA
+    const dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+    const jourNom = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' });
+    h+=`<th colspan="3">${jourNom}. ${d}</th>`;
+});
 h+=`</tr><tr>`;
 dates.forEach(()=>creneaux.forEach(c=>h+=`<th>${c}</th>`));
 head.innerHTML=h;
