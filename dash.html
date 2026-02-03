@@ -8,8 +8,11 @@
 
 <style>
 :root{
---primary:#00f0ff;--bg:#0e0e0e;--card:#1a1a1a;
---danger:#ff4d4d;--success:#00ff00;
+  --primary:#00f0ff;
+  --bg:#0e0e0e;
+  --card:#1a1a1a;
+  --danger:#ff4d4d;
+  --success:#00ff00;
 }
 
 body{font-family:Segoe UI,sans-serif;background:var(--bg);color:#fff;margin:0;padding:20px}
@@ -23,10 +26,10 @@ button{background:var(--primary);color:#000;font-weight:bold;border:none;cursor:
 .btn-excel{background:#217346;color:#fff;margin-left:auto}
 
 #loader{
-display:none;margin:20px auto;width:50px;height:50px;
-border:5px solid rgba(0,240,255,.1);
-border-top:5px solid var(--primary);
-border-radius:50%;animation:spin 1s linear infinite
+  display:none;margin:20px auto;width:50px;height:50px;
+  border:5px solid rgba(0,240,255,.1);
+  border-top:5px solid var(--primary);
+  border-radius:50%;animation:spin 1s linear infinite
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -34,19 +37,9 @@ border-radius:50%;animation:spin 1s linear infinite
 table{border-collapse:separate;border-spacing:0;width:100%}
 th,td{padding:12px;border:1px solid #333;white-space:nowrap;text-align:center;background:var(--card)}
 
-/* Header ligne 1 (dates) */
 thead tr:first-child th{position:sticky;top:0;z-index:20;background:#222}
-
-/* Header ligne 2 (08-10…) */
 thead tr:nth-child(2) th{position:sticky;top:48px;z-index:10;background:#1f1f1f}
-
-/* Colonne NOM */
-tbody td:first-child{
-position:sticky;left:0;z-index:5;background:#1a1a1a;
-border-right:3px solid var(--primary);text-align:left;min-width:200px
-}
-
-/* Coins */
+tbody td:first-child{position:sticky;left:0;z-index:5;background:#1a1a1a;border-right:3px solid var(--primary);text-align:left;min-width:200px}
 thead tr:first-child th:first-child{left:0;z-index:30}
 thead tr:nth-child(2) th:first-child{left:0;z-index:25}
 
@@ -55,12 +48,11 @@ thead tr:nth-child(2) th:first-child{left:0;z-index:25}
 .color-absent{color:var(--danger);border:1px solid var(--danger);background:rgba(255,77,77,.1)}
 .stg-link{cursor:pointer;color:var(--primary);text-decoration:underline}
 
-/* Popup */
 #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999}
 #modal{
-display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-background:#222;padding:30px;border-radius:15px;border:2px solid var(--primary);
-z-index:1000;text-align:center
+  display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:#222;padding:30px;border-radius:15px;border:2px solid var(--primary);
+  z-index:1000;text-align:center
 }
 </style>
 </head>
@@ -70,29 +62,31 @@ z-index:1000;text-align:center
 <h1>Dashboard Pointage</h1>
 
 <div id="table-container">
-<div id="controls">
-<input type="date" id="start">
-<input type="date" id="end">
-<select id="spec"><option value="">-- Spécialité --</option></select>
-<select id="heure">
-<option value="TOUT">Toutes les heures</option>
-<option>08-10</option>
-<option>10-12</option>
-<option>13:30-15:30</option>
-</select>
-<input id="search" placeholder="Nom...">
-<button id="filter">🔍 FILTRER</button>
-<button class="btn-excel" onclick="exportToExcel()">📊 EXPORT</button>
-</div>
+  <div id="controls">
+    <input type="date" id="start">
+    <input type="date" id="end">
+    <select id="spec"><option value="">-- Spécialité --</option></select>
+    <select id="heure">
+      <option value="TOUT">Toutes les heures</option>
+      <option>08-10</option>
+      <option>10-12</option>
+      <option>13:30-15:30</option>
+      <option>15:30-16:30</option>
+      <option>16:30-18:30</option>
+    </select>
+    <input id="search" placeholder="Nom...">
+    <button id="filter">🔍 FILTRER</button>
+    <button class="btn-excel" onclick="exportToExcel()">📊 EXPORT</button>
+  </div>
 
-<div id="loader"></div>
+  <div id="loader"></div>
 
-<div class="table-wrapper">
-<table id="main-table">
-<thead id="table-head"></thead>
-<tbody id="data-body"></tbody>
-</table>
-</div>
+  <div class="table-wrapper">
+    <table id="main-table">
+      <thead id="table-head"></thead>
+      <tbody id="data-body"></tbody>
+    </table>
+  </div>
 </div>
 
 <div id="overlay"></div>
@@ -105,89 +99,98 @@ z-index:1000;text-align:center
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbxDSftK4a-I5KUmEwDxu7jdZib7b3muz9HhjS0LFEZTAvydxgsRDzMweTA-dbdytk1G9Q/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbwndGkkBRvpBbXZHyBFcNpN3v6A0X9eW2vnyP0MpZIqyyE6C2YfruelWcA1uEeF5YQB/exec";
 let toutesLesDonnees=[];
-const creneaux=["08-10","10-12","13:30-15:30"];
+const creneaux=["08-10","10-12","13:30-15:30","15:30-16:30","16:30-18:30"];
 
+// Charger les spécialités dès le départ
 async function chargerInitial(){
-const r=await fetch(API_URL);
-const d=await r.json();
-if(d.specialites) d.specialites.forEach(s=>spec.add(new Option(s,s)));
+  const r = await fetch(API_URL);
+  const d = await r.json();
+  if(d.specialites) d.specialites.forEach(s => spec.add(new Option(s,s)));
 }
 
+// Filtrer pointages entre 2 dates + spécialité
 async function filtrer(){
-loader.style.display="block";
-const r=await fetch(`${API_URL}?start=${start.value}&end=${end.value}&spec=${spec.value}`);
-const d=await r.json();
-toutesLesDonnees=d.pointage||[];
-loader.style.display="none";
-appliquerFiltres();
+  if(!start.value || !end.value) return alert("Choisir date de début et fin");
+  loader.style.display="block";
+
+  const r = await fetch(`${API_URL}?start=${start.value}&end=${end.value}&spec=${spec.value}`);
+  const d = await r.json();
+  toutesLesDonnees = d.pointage || [];
+
+  loader.style.display="none";
+  appliquerFiltres();
 }
 
+// Filtre local par heure et recherche
 function appliquerFiltres(){
-let d=toutesLesDonnees;
-if(heure.value!=="TOUT") d=d.filter(x=>x.horaire===heure.value);
-if(search.value) d=d.filter(x=>x.nom.toLowerCase().includes(search.value.toLowerCase()));
-afficherDonnees(d);
+  let d = toutesLesDonnees;
+  if(heure.value !== "TOUT") d = d.filter(x => x.horaire === heure.value);
+  if(search.value) d = d.filter(x => x.nom.toLowerCase().includes(search.value.toLowerCase()));
+  afficherDonnees(d);
 }
 
+// Affichage tableau
 function afficherDonnees(data){
-const head=document.getElementById("table-head");
-const body=document.getElementById("data-body");
-if(!data.length){head.innerHTML="<tr><th>Aucune donnée</th></tr>";body.innerHTML="";return;}
+  const head = document.getElementById("table-head");
+  const body = document.getElementById("data-body");
+  if(!data.length){head.innerHTML="<tr><th>Aucune donnée</th></tr>";body.innerHTML="";return;}
 
-const dates=[...new Set(data.map(x=>x.date))];
+  const dates = [...new Set(data.map(x=>x.date))];
 
-let h=`<tr><th rowspan="2">Nom</th>`;
-dates.forEach(d=>{
-    // Utilisation de split pour éviter les erreurs de décalage de fuseau horaire
-    const parts = d.split('/');
-    // On suppose le format JJ/MM/AAAA
-    const dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
-    const jourNom = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' });
-    h+=`<th colspan="3">${jourNom}. ${d}</th>`;
-});
-h+=`</tr><tr>`;
-dates.forEach(()=>creneaux.forEach(c=>h+=`<th>${c}</th>`));
-head.innerHTML=h;
+  let h=`<tr><th rowspan="2">Nom</th>`;
+  dates.forEach(d=>{
+    const parts=d.split('/');
+    const dateObj = new Date(parts[2], parts[1]-1, parts[0]);
+    const jourNom = dateObj.toLocaleDateString('fr-FR',{weekday:'short'});
+    h+=`<th colspan="${creneaux.length}">${jourNom}. ${d}</th>`;
+  });
+  h+=`</tr><tr>`;
+  dates.forEach(()=>creneaux.forEach(c=>h+=`<th>${c}</th>`));
+  head.innerHTML=h;
 
-const grp={};
-data.forEach(d=>{
-if(!grp[d.id]) grp[d.id]={nom:d.nom,id:d.id,etats:{}};
-grp[d.id].etats[d.date+"_"+d.horaire]=d.etat;
-});
+  const grp={};
+  data.forEach(d=>{
+    if(!grp[d.id]) grp[d.id]={nom:d.nom,id:d.id,etats:{}};
+    grp[d.id].etats[d.date+"_"+d.horaire]=d.etat;
+  });
 
-body.innerHTML=Object.values(grp).map(g=>{
-let r=`<tr><td class="stg-link" onclick="voirDetails('${g.id}')">${g.nom}</td>`;
-dates.forEach(d=>creneaux.forEach(c=>{
-const e=(g.etats[d+"_"+c]||"-").trim();
-let css="";
-if(e.toLowerCase().includes("présent")||e.toLowerCase().includes("present")) css="color-present";
-else if(e.toLowerCase().includes("absent")) css="color-absent";
-r+=`<td><span class="badge ${css}">${e}</span></td>`;
-}));
-return r+="</tr>";
-}).join("");
+  body.innerHTML=Object.values(grp).map(g=>{
+    let r=`<tr><td class="stg-link" onclick="voirDetails('${g.id}')">${g.nom}</td>`;
+    dates.forEach(d=>creneaux.forEach(c=>{
+      const e=(g.etats[d+"_"+c]||"-").trim();
+      let css="";
+      if(e.toLowerCase().includes("présent")||e.toLowerCase().includes("present")) css="color-present";
+      else if(e.toLowerCase().includes("absent")) css="color-absent";
+      r+=`<td><span class="badge ${css}">${e}</span></td>`;
+    }));
+    return r+="</tr>";
+  }).join("");
 }
 
+// Popup détails
 function voirDetails(id){
-const stats=toutesLesDonnees.filter(d=>d.id==id);
-const pres=stats.filter(d=>d.etat.toLowerCase().includes("présent")||d.etat.toLowerCase().includes("present")).length;
-const abs=stats.filter(d=>d.etat.toLowerCase().includes("absent")).length;
-const taux=(pres+abs)>0?((pres/(pres+abs))*100).toFixed(1):0;
-document.getElementById("m-nom").textContent=stats[0].nom;
-document.getElementById("m-pres").textContent=pres;
-document.getElementById("m-abs").textContent=abs;
-document.getElementById("m-taux").textContent=taux;
-modal.style.display="block";overlay.style.display="block";
+  const stats=toutesLesDonnees.filter(d=>d.id==id);
+  if(stats.length===0) return;
+  const pres=stats.filter(d=>d.etat.toLowerCase().includes("présent")||d.etat.toLowerCase().includes("present")).length;
+  const abs=stats.filter(d=>d.etat.toLowerCase().includes("absent")).length;
+  const taux=(pres+abs)>0?((pres/(pres+abs))*100).toFixed(1):0;
+  document.getElementById("m-nom").textContent=stats[0].nom;
+  document.getElementById("m-pres").textContent=pres;
+  document.getElementById("m-abs").textContent=abs;
+  document.getElementById("m-taux").textContent=taux;
+  modal.style.display="block";overlay.style.display="block";
 }
 
 function closeModal(){modal.style.display="none";overlay.style.display="none"}
 
+// Export Excel
 function exportToExcel(){
-XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("main-table")),"Pointage.xlsx");
+  XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("main-table")),"Pointage.xlsx");
 }
 
+// Initialisation
 chargerInitial();
 filter.onclick=filtrer;
 search.oninput=appliquerFiltres;
