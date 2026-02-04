@@ -66,14 +66,6 @@ thead tr:nth-child(2) th:first-child{left:0;z-index:25}
     <input type="date" id="start">
     <input type="date" id="end">
     <select id="spec"><option value="">-- Spécialité --</option></select>
-    <select id="heure">
-      <option value="TOUT">Toutes les heures</option>
-      <option>08-10</option>
-      <option>10-12</option>
-      <option>13:30-15:30</option>
-      <option>15:30-16:30</option>
-      <option>16:30-18:30</option>
-    </select>
     <input id="search" placeholder="Nom...">
     <button id="filter">🔍 FILTRER</button>
     <button class="btn-excel" onclick="exportToExcel()">📊 EXPORT</button>
@@ -99,15 +91,28 @@ thead tr:nth-child(2) th:first-child{left:0;z-index:25}
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbwndGkkBRvpBbXZHyBFcNpN3v6A0X9eW2vnyP0MpZIqyyE6C2YfruelWcA1uEeF5YQB/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbz8eyvMcFyAVjeRTWjhtcNun0D2MP4M-bn6kS1Q28e2pPzwqT6XIhwjGCie--FYpV5D/exec";
 let toutesLesDonnees=[];
 const creneaux=["08-10","10-12","13:30-15:30","15:30-16:30","16:30-18:30"];
 
+const tableHead=document.getElementById("table-head");
+const tableBody=document.getElementById("data-body");
+const spec=document.getElementById("spec");
+const start=document.getElementById("start");
+const end=document.getElementById("end");
+const search=document.getElementById("search");
+const filter=document.getElementById("filter");
+const loader=document.getElementById("loader");
+const modal=document.getElementById("modal");
+const overlay=document.getElementById("overlay");
+
 // Charger les spécialités dès le départ
 async function chargerInitial(){
+  loader.style.display="block";
   const r = await fetch(API_URL);
   const d = await r.json();
   if(d.specialites) d.specialites.forEach(s => spec.add(new Option(s,s)));
+  loader.style.display="none";
 }
 
 // Filtrer pointages entre 2 dates + spécialité
@@ -123,40 +128,35 @@ async function filtrer(){
   appliquerFiltres();
 }
 
-// Filtre local par heure et recherche
+// Filtre local par recherche nom
 function appliquerFiltres(){
   let d = toutesLesDonnees;
-  if(heure.value !== "TOUT") d = d.filter(x => x.horaire === heure.value);
   if(search.value) d = d.filter(x => x.nom.toLowerCase().includes(search.value.toLowerCase()));
   afficherDonnees(d);
 }
 
 // Affichage tableau
 function afficherDonnees(data){
-  const head = document.getElementById("table-head");
-  const body = document.getElementById("data-body");
-  if(!data.length){head.innerHTML="<tr><th>Aucune donnée</th></tr>";body.innerHTML="";return;}
+  if(!data.length){tableHead.innerHTML="<tr><th>Aucune donnée</th></tr>";tableBody.innerHTML="";return;}
 
   const dates = [...new Set(data.map(x=>x.date))];
 
+  // En-têtes
   let h=`<tr><th rowspan="2">Nom</th>`;
-  dates.forEach(d=>{
-    const parts=d.split('/');
-    const dateObj = new Date(parts[2], parts[1]-1, parts[0]);
-    const jourNom = dateObj.toLocaleDateString('fr-FR',{weekday:'short'});
-    h+=`<th colspan="${creneaux.length}">${jourNom}. ${d}</th>`;
-  });
+  dates.forEach(d=>h+=`<th colspan="${creneaux.length}">${d}</th>`);
   h+=`</tr><tr>`;
   dates.forEach(()=>creneaux.forEach(c=>h+=`<th>${c}</th>`));
-  head.innerHTML=h;
+  h+=`</tr>`;
+  tableHead.innerHTML=h;
 
+  // Grouper par stagiaire
   const grp={};
   data.forEach(d=>{
     if(!grp[d.id]) grp[d.id]={nom:d.nom,id:d.id,etats:{}};
     grp[d.id].etats[d.date+"_"+d.horaire]=d.etat;
   });
 
-  body.innerHTML=Object.values(grp).map(g=>{
+  tableBody.innerHTML=Object.values(grp).map(g=>{
     let r=`<tr><td class="stg-link" onclick="voirDetails('${g.id}')">${g.nom}</td>`;
     dates.forEach(d=>creneaux.forEach(c=>{
       const e=(g.etats[d+"_"+c]||"-").trim();
@@ -194,7 +194,6 @@ function exportToExcel(){
 chargerInitial();
 filter.onclick=filtrer;
 search.oninput=appliquerFiltres;
-heure.onchange=appliquerFiltres;
 overlay.onclick=closeModal;
 </script>
 
