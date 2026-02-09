@@ -178,6 +178,7 @@ if(!TOKEN){ showToast('Aucun token trouvé dans l’URL !', 'error'); }
 
 let students = [];
 let attendanceData = {};
+let SPECIALITE = "";
 
 // --- Fonctions Toast ---
 function showToast(message, type='success'){
@@ -194,6 +195,9 @@ fetch(`${SCRIPT_URL}?token=${TOKEN}`)
   .then(res => res.json())
   .then(data => {
     if(!data.ok){ showToast('Erreur : ' + data.error, 'error'); return; }
+
+    SPECIALITE = data.specialite; 
+
     students = data.students.map(s => ({ ...s, status: null }));
 
     const titre = document.querySelector('header');
@@ -266,7 +270,7 @@ function mark(student, status, card){
   attendanceData[student.matricule] = {
     matricule: student.matricule,
     nom: student.nom,
-    specialite: student.specialite,
+    specialite: SPECIALITE,
     date: now.toLocaleDateString(),
     heure: getCreneau(),
     status: status
