@@ -3,227 +3,143 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pointage des Stagiaires</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<title>Admin Panel - Pointage</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-/* --- Global --- */
+:root {
+    --bg: #0b0e14;
+    --card-bg: #1a1d26;
+    --accent: #6366f1;
+    --success: #10b981;
+    --danger: #f43f5e;
+    --text: #f8fafc;
+    --border: #2d313f;
+}
+
+* { box-sizing: border-box; transition: all 0.2s ease; }
+
 body {
-  font-family: 'Inter', sans-serif;
-  background: #0d0d0d;
-  margin: 0;
-  padding: 0;
-  color: #fff;
-}
-header {
-  background: linear-gradient(90deg, #ff00ff, #00ffff);
-  color: white;
-  padding: 1rem;
-  text-align: center;
-  font-size: 1.5rem;
-  text-shadow: 0 0 5px #fff;
-}
-.container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding-bottom: 100px;
 }
 
-/* --- Cartes --- */
-.card {
-  background: rgba(20, 20, 30, 0.9);
-  border: 1px solid #00ffff;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 0 10px #00ffff;
-  text-align: center;
-  transition: transform 0.2s, box-shadow 0.2s;
-  position: relative;
-}
-.card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 0 20px #00ffff;
-}
-.card img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 0.5rem;
-  border: 2px solid #00ffff;
-  box-shadow: 0 0 5px #00ffff;
-}
-.card h3, .card p {
-  margin: 0.25rem 0;
-}
-
-/* --- Badge absent --- */
-.badge-absent {
-  background: #ff0044;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 8px;
-  font-size: 12px;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  box-shadow: 0 0 10px #ff0044;
-  animation: pulse 1.5s infinite;
-}
-@keyframes pulse {
-  0% { box-shadow: 0 0 10px #ff0044; }
-  50% { box-shadow: 0 0 20px #ff0044; }
-  100% { box-shadow: 0 0 10px #ff0044; }
-}
-
-/* --- Boutons --- */
-.buttons {
-  margin-top: 0.75rem;
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-}
-.btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  color: #fff;
-  box-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
-  transition: 0.3s;
-}
-.btn.present { background-color: #22c55e; box-shadow: 0 0 5px #22c55e, 0 0 10px #22c55e; }
-.btn.absent { background-color: #ef4444; box-shadow: 0 0 5px #ef4444, 0 0 10px #ef4444; }
-.btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff;
-}
-.selected { 
-  border: white 2px solid;
-  box-shadow: 0 0 10px #e3eff1;
- }
-
-/* --- Submit --- */
-#submit-btn {
-  display: block;
-  margin: 1rem auto;
-  padding: 0.75rem 2rem;
-  background: #00ffff;
-  color: #0d0d0d;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  cursor: pointer;
-  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-  transition: 0.3s;
-}
-#submit-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
-}
-
-/* --- Info --- */
-@media(max-width:500px){ .buttons{ flex-direction: column; } }
-.info { text-align:center; color:#aaa; margin-top:.5rem; font-size:.95rem; }
-
-/* --- Toasts --- */
-#toast-container {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+/* --- TOAST SYSTEM --- */
+#toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
 .toast {
-  background: rgba(0,0,0,0.9);
-  color: #fff;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px #00ffff;
-  font-weight: 500;
-  opacity: 0;
-  transform: translateX(100%);
-  animation: slideIn 0.5s forwards, fadeOut 0.5s 3s forwards;
+    background: #1a1d26;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    border-left: 4px solid var(--accent);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    animation: slideIn 0.3s ease forwards;
 }
-.toast.success { border-left: 5px solid #22c55e; }
-.toast.error { border-left: 5px solid #ef4444; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-@keyframes slideIn {
-  to { transform: translateX(0); opacity: 1; }
+/* --- HEADER --- */
+header {
+    background: rgba(26, 29, 38, 0.9);
+    backdrop-filter: blur(15px);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
 }
-@keyframes fadeOut {
-  to { opacity: 0; transform: translateX(100%); }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.creneau-pill { background: #1e212d; color: #888; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; border: 1px solid var(--border); margin-top: 5px; display: inline-block; }
+.stats-badges { display: flex; gap: 8px; }
+.badge { padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; border: 1px solid var(--border); }
+.badge-p { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.badge-a { background: rgba(244, 63, 94, 0.1); color: var(--danger); }
+
+/* --- GRID & CARDS --- */
+.container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; padding: 1.5rem; }
+.card { background: var(--card-bg); border-radius: 16px; padding: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); }
+.card.selected-present { border-color: var(--success); background: rgba(16, 185, 129, 0.03); }
+.card.selected-absent { border-color: var(--danger); background: rgba(244, 63, 94, 0.03); }
+.card img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); }
+.card-info { flex: 1; overflow: hidden; }
+.card-info h3 { margin: 0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.warning-text { font-size: 0.7rem; color: var(--danger); font-weight: 600; }
+
+/* --- ACTIONS --- */
+.actions { display: flex; gap: 6px; }
+.dot { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border); background: #0f111a; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.dot.p-btn.active { background: var(--success); color: #000; border-color: var(--success); }
+.dot.a-btn.active { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+/* --- FOOTER --- */
+.footer {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(15, 17, 26, 0.95); backdrop-filter: blur(20px);
+    padding: 10px 20px; border-radius: 20px; border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000;
 }
+#submit-btn {
+    background: white; color: black; border: none; padding: 10px 25px;
+    border-radius: 14px; font-weight: 700; cursor: pointer;
+}
+#submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.search-box { flex: 1; background: #0f111a; border: 1px solid var(--border); padding: 10px 15px; border-radius: 12px; color: white; outline: none; }
 </style>
 </head>
 <body>
-<header></header>
 
-<div class="container" id="students-container"></div>
-<div class="info">Sélectionne les statuts puis clique <strong>Envoyer tout</strong>.</div>
-<button id="submit-btn">Envoyer tout</button>
-
-<!-- Toast container -->
 <div id="toast-container"></div>
+
+<header>
+    <div class="header-top">
+        <div>
+            <div id="spec-label" style="color:var(--accent); font-weight:600; font-size:0.7rem; text-transform:uppercase;">CHARGEMENT...</div>
+            <h1 style="margin:0; font-size:1.1rem;">Pointage Stagiaires</h1>
+            <div class="creneau-pill">🕒 <span id="current-creneau">--:--</span></div>
+        </div>
+        <div class="stats-badges">
+            <div class="badge badge-p">P: <span id="count-p">0</span></div>
+            <div class="badge badge-a">A: <span id="count-a">0</span></div>
+        </div>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <input type="text" class="search-box" id="search" placeholder="Rechercher...">
+        <button onclick="markAllPresent()" style="background:var(--accent); border:none; color:white; border-radius:12px; padding:0 15px; font-weight:600; cursor:pointer;">Tout Présent</button>
+    </div>
+</header>
+
+<div class="container" id="students-grid"></div>
+
+<div class="footer">
+    <div style="font-size:0.85rem; font-weight:600;"><span id="total-done">0</span> / <span id="total-all">0</span></div>
+    <button id="submit-btn" disabled>Envoyer tout</button>
+</div>
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8eyvMcFyAVjeRTWjhtcNun0D2MP4M-bn6kS1Q28e2pPzwqT6XIhwjGCie--FYpV5D/exec";
 const urlParams = new URLSearchParams(window.location.search);
 const TOKEN = urlParams.get('token');
 
-if(!TOKEN){ showToast('Aucun token trouvé dans l’URL !', 'error'); }
-
 let students = [];
-let attendanceData = {};
 let SPECIALITE = "";
 
-// --- Fonctions Toast ---
-function showToast(message, type='success'){
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
+function showToast(text, type='info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    if(type === 'success') toast.style.borderColor = 'var(--success)';
+    if(type === 'error') toast.style.borderColor = 'var(--danger)';
+    toast.textContent = text;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
 }
 
-// --- Charger la liste via token ---
-fetch(`${SCRIPT_URL}?token=${TOKEN}`)
-  .then(res => res.json())
-  .then(data => {
-    if(!data.ok){ showToast('Erreur : ' + data.error, 'error'); return; }
-
-    SPECIALITE = data.specialite; 
-
-    students = data.students.map(s => ({ ...s, status: null }));
-
-    const titre = document.querySelector('header');
-    titre.textContent = students.length > 0 
-        ? `Pointage des Stagiaires (${students.length}) - Spécialité : ${data.specialite}`
-        : 'Aucun stagiaire trouvé pour cette spécialité';
-
-    afficherStudents();
-  })
-  .catch(err => {
-    console.error("Erreur fetch liste :", err);
-    showToast('Erreur chargement liste (voir console).', 'error');
-  });
-
-// --- Vérifier si tous les stagiaires sont validés ---
-function tousValides() {
-    return students.every(stg => stg.status !== null);
-}
-
-// --- Gestion des créneaux ---
 function getCreneau() {
     const now = new Date();
-    const h = now.getHours();
-    const m = now.getMinutes();
-    const totalMinutes = h * 60 + m;
-
+    const totalMinutes = now.getHours() * 60 + now.getMinutes();
     if(totalMinutes >= 480 && totalMinutes < 600) return "08-10";
     if(totalMinutes >= 600 && totalMinutes < 720) return "10-12";
     if(totalMinutes >= 810 && totalMinutes < 930) return "13:30-15:30";
@@ -232,98 +148,99 @@ function getCreneau() {
     return "Hors créneau";
 }
 
-// --- Affichage des étudiants ---
-function afficherStudents() {
-  const container = document.getElementById('students-container');
-  container.innerHTML = '';
-  
-  students.forEach(student => {
-    const card = document.createElement('div');
-    card.className = 'card';
+document.getElementById('current-creneau').textContent = getCreneau();
 
-    const photo = student.img === 'H' ? 'avatar.webp' : 'avatar-femme.webp';
+fetch(`${SCRIPT_URL}?token=${TOKEN}`)
+    .then(res => res.json())
+    .then(data => {
+        if(!data.ok) return showToast("Erreur Token", "error");
+        SPECIALITE = data.specialite;
+        students = data.students.map(s => ({ ...s, status: null }));
+        document.getElementById('spec-label').textContent = SPECIALITE;
+        document.getElementById('total-all').textContent = students.length;
+        render();
+    });
 
-    card.innerHTML = `
-      ${student.dernierStatut === "Absent" ? `<span class="badge-absent">Absent la dernière fois</span>` : ""}
-      <img src="${photo}" alt="${student.nom}">
-      <h3>${student.nom}</h3>
-      <div class="buttons">
-        <button class="btn present">Présent</button>
-        <button class="btn absent">Absent</button>
-      </div>
-    `;
-    container.appendChild(card);
+function render() {
+    const query = document.getElementById('search').value.toLowerCase();
+    const grid = document.getElementById('students-grid');
+    grid.innerHTML = '';
+    
+    students.filter(s => s.nom.toLowerCase().includes(query)).forEach(s => {
+        const card = document.createElement('div');
+        card.className = `card ${s.status === 'Present' ? 'selected-present' : s.status === 'Absent' ? 'selected-absent' : ''}`;
+        
+        // --- RETOUR AUX AVATARS D'ORIGINE ---
+        const photo = s.img === 'H' ? 'avatar.webp' : 'avatar-femme.webp';
 
-    card.querySelector('.present').addEventListener('click', () => mark(student, 'Present', card));
-    card.querySelector('.absent').addEventListener('click', () => mark(student, 'Absent', card));
-  });
+        card.innerHTML = `
+            <img src="${photo}" alt="Avatar">
+            <div class="card-info">
+                <h3>${s.nom}</h3>
+                ${s.dernierStatut === 'Absent' ? '<span class="warning-text">⚠ Absent hier</span>' : ''}
+            </div>
+            <div class="actions">
+                <div class="dot p-btn ${s.status === 'Present' ? 'active' : ''}" onclick="mark('${s.matricule}', 'Present')">P</div>
+                <div class="dot a-btn ${s.status === 'Absent' ? 'active' : ''}" onclick="mark('${s.matricule}', 'Absent')">A</div>
+            </div>`;
+        grid.appendChild(card);
+    });
+    updateStats();
 }
 
-// --- Marquer la présence ---
-function mark(student, status, card){
-  card.querySelectorAll('.btn').forEach(btn => btn.classList.remove('selected'));
-  card.querySelector(`.${status === 'Present' ? 'present' : 'absent'}`).classList.add('selected');
-
-  student.status = status;
-
-  const now = new Date();
-  attendanceData[student.matricule] = {
-    matricule: student.matricule,
-    nom: student.nom,
-    specialite: SPECIALITE,
-    date: now.toLocaleDateString(),
-    heure: getCreneau(),
-    status: status
-  };
+function mark(id, status) {
+    const s = students.find(x => x.matricule === id);
+    s.status = status;
+    render();
 }
 
-// --- Envoi des données avec anti-double clic ---
-const submitBtn = document.getElementById('submit-btn');
+function markAllPresent() {
+    students.forEach(s => { if(s.status === null) s.status = 'Present'; });
+    render();
+    showToast("Tous marqués PRÉSENTS", "success");
+}
 
-submitBtn.addEventListener('click', () => {
-  if (submitBtn.disabled) return;
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Envoi...";
-  submitBtn.style.opacity = "0.6";
-  submitBtn.style.cursor = "not-allowed";
+function updateStats() {
+    const p = students.filter(s => s.status === 'Present').length;
+    const a = students.filter(s => s.status === 'Absent').length;
+    const total = students.filter(s => s.status !== null).length;
+    document.getElementById('count-p').textContent = p;
+    document.getElementById('count-a').textContent = a;
+    document.getElementById('total-done').textContent = total;
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = total !== students.length;
+    if(total === students.length) { btn.style.background = "var(--accent)"; btn.style.color = "white"; }
+}
 
-  const dataToSend = Object.values(attendanceData);
+document.getElementById('search').addEventListener('input', render);
 
-  if(dataToSend.length === 0){
-    showToast('Aucune présence sélectionnée !', 'error');
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Envoyer tout";
-    submitBtn.style.opacity = "1";
-    submitBtn.style.cursor = "pointer";
-    return;
-  }
+document.getElementById('submit-btn').addEventListener('click', function() {
+    this.disabled = true;
+    this.innerHTML = `<span>⏳ Envoi...</span>`;
+    
+    const dataToSend = students.map(s => ({
+        matricule: s.matricule,
+        nom: s.nom,
+        specialite: SPECIALITE,
+        date: new Date().toLocaleDateString(),
+        heure: getCreneau(),
+        status: s.status
+    }));
 
-  if (!tousValides()) {
-      showToast("⚠️ Vous devez marquer tous les stagiaires : Présent OU Absent.", 'error');
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Envoyer tout";
-      submitBtn.style.opacity = "1";
-      submitBtn.style.cursor = "pointer";
-      return;
-  }
-
-  fetch(SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(dataToSend)
-  }).then(() => {
-    showToast('Présences envoyées !', 'success');
-    attendanceData = {};
-    location.reload();
-  }).catch(err => {
-    console.warn('Erreur POST :', err);
-    showToast('Erreur lors de l’envoi !', 'error');
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Envoyer tout";
-    submitBtn.style.opacity = "1";
-    submitBtn.style.cursor = "pointer";
-  });
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(dataToSend)
+    })
+    .then(() => {
+        showToast("Synchronisation réussie ! ✅", "success");
+        setTimeout(() => location.reload(), 1500);
+    })
+    .catch(() => {
+        showToast("Erreur d'envoi", "error");
+        this.disabled = false;
+        this.innerHTML = "Envoyer tout";
+    });
 });
 </script>
 </body>
