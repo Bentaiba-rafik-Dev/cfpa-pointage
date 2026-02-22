@@ -230,6 +230,7 @@ document.getElementById('submit-btn').addEventListener('click', function() {
     fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend)
     })
     .then(() => {
