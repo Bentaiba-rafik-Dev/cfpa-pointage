@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Pointage</title>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
@@ -16,79 +17,209 @@
  --success:#00ff00;
 }
 
-body{font-family:Segoe UI,sans-serif;background:var(--bg);color:#fff;margin:0;padding:20px}
+body{
+ font-family:Segoe UI,sans-serif;
+ background:var(--bg);
+ color:#fff;
+ margin:0;
+ padding:20px
+}
+
 h1{text-align:center;color:var(--primary)}
 
-#table-container{width:98%;margin:auto;background:var(--card);padding:20px;border-radius:12px}
+#table-container{
+ width:98%;
+ margin:auto;
+ background:var(--card);
+ padding:20px;
+ border-radius:12px
+}
 
+/* CONTROLS */
 #controls{
- display:flex;flex-wrap:wrap;gap:10px;background:#222;
- padding:15px;border-radius:8px;position:sticky;top:0;z-index:100
+ display:flex;
+ flex-wrap:wrap;
+ gap:10px;
+ background:#222;
+ padding:15px;
+ border-radius:8px;
+ position:sticky;
+ top:0;
+ z-index:100
 }
 
 input,select,button{
- background:#333;border:1px solid #444;color:white;
- padding:10px;border-radius:6px
+ background:#333;
+ border:1px solid #444;
+ color:white;
+ padding:10px;
+ border-radius:6px
 }
 
-button{background:var(--primary);color:#000;font-weight:bold;border:none;cursor:pointer}
-.btn-excel{background:#217346;color:#fff;margin-left:auto}
+button{
+ background:var(--primary);
+ color:#000;
+ font-weight:bold;
+ border:none;
+ cursor:pointer
+}
 
+.btn-excel{
+ background:#217346;
+ color:#fff;
+ margin-left:auto
+}
+
+/* LOADER */
 #loader{
- display:none;margin:20px auto;width:50px;height:50px;
+ display:none;
+ margin:20px auto;
+ width:50px;
+ height:50px;
  border:5px solid rgba(0,240,255,.1);
  border-top:5px solid var(--primary);
- border-radius:50%;animation:spin 1s linear infinite
+ border-radius:50%;
+ animation:spin 1s linear infinite
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.table-wrapper{overflow-x:auto;border:1px solid #333}
-table{border-collapse:separate;border-spacing:0;width:100%}
-th,td{padding:12px;border:1px solid #333;white-space:nowrap;text-align:center;background:var(--card)}
+/* TABLE PC */
+.table-wrapper{
+ overflow-x:auto;
+ border:1px solid #333
+}
 
-thead tr:first-child th{position:sticky;top:0;z-index:20;background:#222}
-thead tr:nth-child(2) th{position:sticky;top:48px;z-index:10;background:#1f1f1f}
-tbody td:first-child{position:sticky;left:0;z-index:5;background:#1a1a1a;border-right:3px solid var(--primary);text-align:left;min-width:200px}
+table{
+ border-collapse:separate;
+ border-spacing:0;
+ width:100%
+}
 
-.badge{padding:5px 10px;border-radius:4px;font-weight:bold}
-.color-present{color:var(--success);border:1px solid var(--success);background:rgba(0,255,0,.1)}
-.color-absent{color:var(--danger);border:1px solid var(--danger);background:rgba(255,77,77,.1)}
-.stg-link{cursor:pointer;color:var(--primary);text-decoration:underline}
+th,td{
+ padding:12px;
+ border:1px solid #333;
+ white-space:nowrap;
+ text-align:center;
+ background:var(--card)
+}
 
-/* Modal */
-#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999}
+thead tr:first-child th{
+ position:sticky;
+ top:0;
+ z-index:20;
+ background:#222
+}
+
+thead tr:nth-child(2) th{
+ position:sticky;
+ top:48px;
+ z-index:10;
+ background:#1f1f1f
+}
+
+tbody td:first-child{
+ position:sticky;
+ left:0;
+ z-index:5;
+ background:#1a1a1a;
+ border-right:3px solid var(--primary);
+ text-align:left;
+ min-width:200px
+}
+
+/* BADGES */
+.badge{
+ padding:5px 10px;
+ border-radius:4px;
+ font-weight:bold
+}
+
+.color-present{
+ color:var(--success);
+ border:1px solid var(--success);
+ background:rgba(0,255,0,.12)
+}
+
+.color-absent{
+ color:var(--danger);
+ border:1px solid var(--danger);
+ background:rgba(255,77,77,.15)
+}
+
+.stg-link{
+ cursor:pointer;
+ color:var(--primary);
+ text-decoration:underline
+}
+
+/* MODAL */
+#overlay{
+ display:none;
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.85);
+ z-index:999
+}
+
 #modal{
- display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
- background:#222;padding:30px;border-radius:15px;border:2px solid var(--primary);
- z-index:1000;text-align:center
+ display:none;
+ position:fixed;
+ top:50%;
+ left:50%;
+ transform:translate(-50%,-50%);
+ background:#222;
+ padding:30px;
+ border-radius:15px;
+ border:2px solid var(--primary);
+ z-index:1000;
+ text-align:center
 }
 
-/* ================= MOBILE VERSION ================= */
-@media (max-width:768px){
+/* MOBILE */
+.mobile-cards{display:none}
 
-body{padding:10px}
-h1{font-size:20px}
+@media(max-width:768px){
 
-#controls{flex-direction:column;align-items:stretch;gap:8px;position:relative}
-#controls input,#controls select,#controls button{width:100%;font-size:14px}
-.btn-excel{margin-left:0}
+ body{padding:10px}
+ h1{font-size:20px}
 
-.table-wrapper{display:none}
+ #controls{flex-direction:column}
 
-.mobile-cards{display:flex;flex-direction:column;gap:12px;margin-top:15px}
+ .table-wrapper{display:none}
 
-.card-stagiaire{
- background:#1b1b1b;border:1px solid #333;border-radius:12px;
- padding:12px;box-shadow:0 0 10px rgba(0,240,255,.08)
-}
+ .mobile-cards{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin-top:15px
+ }
 
-.card-header{font-weight:bold;font-size:16px;color:var(--primary);margin-bottom:8px}
-.card-date{margin-top:8px;font-size:13px;color:#aaa;border-top:1px solid #333;padding-top:6px}
+ .card-stagiaire{
+  background:#1b1b1b;
+  border:1px solid #333;
+  border-radius:12px;
+  padding:12px
+ }
 
-.slot{display:flex;justify-content:space-between;margin:4px 0;font-size:13px}
-.badge{font-size:12px;padding:4px 8px}
+ .card-header{
+  font-weight:bold;
+  font-size:16px;
+  color:var(--primary)
+ }
 
-#modal{width:90%;padding:20px}
+ .card-date{
+  margin-top:8px;
+  font-size:13px;
+  color:#aaa;
+  border-top:1px solid #333;
+  padding-top:6px
+ }
+
+ .slot{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px
+ }
 }
 </style>
 </head>
@@ -98,6 +229,7 @@ h1{font-size:20px}
 <h1>Dashboard Pointage</h1>
 
 <div id="table-container">
+
  <div id="controls">
   <input type="date" id="start">
   <input type="date" id="end">
@@ -117,21 +249,23 @@ h1{font-size:20px}
  </div>
 
  <div id="mobile-view" class="mobile-cards"></div>
+
 </div>
 
 <div id="overlay"></div>
 <div id="modal">
-<h2 id="m-nom"></h2>
-<p>Présences: <span id="m-pres" style="color:var(--success)"></span></p>
-<p>Absences: <span id="m-abs" style="color:var(--danger)"></span></p>
-<p>Taux: <span id="m-taux"></span>%</p>
-<button onclick="closeModal()">Fermer</button>
+ <h2 id="m-nom"></h2>
+ <p>Présences : <span id="m-pres" style="color:var(--success)"></span></p>
+ <p>Absences : <span id="m-abs" style="color:var(--danger)"></span></p>
+ <p>Taux : <span id="m-taux"></span>%</p>
+ <button onclick="closeModal()">Fermer</button>
 </div>
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbz8eyvMcFyAVjeRTWjhtcNun0D2MP4M-bn6kS1Q28e2pPzwqT6XIhwjGCie--FYpV5D/exec";
-let toutesLesDonnees=[];
 const creneaux=["08-10","10-12","13:30-15:30","15:30-16:30"];
+
+let toutesLesDonnees=[];
 
 const tableHead=document.getElementById("table-head");
 const tableBody=document.getElementById("data-body");
@@ -139,27 +273,43 @@ const spec=document.getElementById("spec");
 const start=document.getElementById("start");
 const end=document.getElementById("end");
 const search=document.getElementById("search");
-const filter=document.getElementById("filter");
 const loader=document.getElementById("loader");
 const mobileView=document.getElementById("mobile-view");
 
-function formatDateAvecJour(dStr){
- const jours=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
- const p=dStr.split("/");
- const d=new Date(p[2],p[1]-1,p[0]);
- return `${jours[d.getDay()]} ${dStr}`;
+function normalize(v){
+ return (v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+
+function formatDateAvecJour(d){
+ const j=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+ const [dd,mm,yy]=d.split("/");
+ const dt=new Date(yy,mm-1,dd);
+ return `${j[dt.getDay()]} ${d}`;
+}
+
+function getDatesBetween(s,e){
+ const dates=[];
+ let d=new Date(s);
+ const end=new Date(e);
+ while(d<=end){
+  dates.push(
+   String(d.getDate()).padStart(2,"0")+"/"+
+   String(d.getMonth()+1).padStart(2,"0")+"/"+
+   d.getFullYear()
+  );
+  d.setDate(d.getDate()+1);
+ }
+ return dates;
 }
 
 async function chargerInitial(){
- loader.style.display="block";
  const r=await fetch(API_URL);
  const d=await r.json();
  if(d.specialites) d.specialites.forEach(s=>spec.add(new Option(s,s)));
- loader.style.display="none";
 }
 
 async function filtrer(){
- if(!start.value||!end.value) return alert("Choisir date début et fin");
+ if(!start.value||!end.value) return alert("Choisir les dates");
  loader.style.display="block";
  const r=await fetch(`${API_URL}?start=${start.value}&end=${end.value}&spec=${spec.value}`);
  const d=await r.json();
@@ -175,144 +325,127 @@ function appliquerFiltres(){
 }
 
 function afficherDonnees(data){
- if(!data.length){tableHead.innerHTML="<tr><th>Aucune donnée</th></tr>";tableBody.innerHTML="";mobileView.innerHTML="";return;}
-
- const dates=[...new Set(data.map(x=>x.date))];
-
- let h=`<tr><th rowspan="2">Nom</th>`;
- dates.forEach(d=>h+=`<th colspan="${creneaux.length}">${formatDateAvecJour(d)}</th>`);
- h+=`</tr><tr>`;
- dates.forEach(()=>creneaux.forEach(c=>h+=`<th>${c}</th>`));
- h+=`</tr>`;
- tableHead.innerHTML=h;
-
+ const dates=getDatesBetween(start.value,end.value);
  const grp={};
- data.forEach(d=>{
-  if(!grp[d.id]) grp[d.id]={nom:d.nom,id:d.id,etats:{}};
-  grp[d.id].etats[d.date+"_"+d.horaire]=d.etat;
+
+ data.forEach(x=>{
+  if(!grp[x.id]) grp[x.id]={nom:x.nom,id:x.id,etats:{}};
+  grp[x.id].etats[x.date+"_"+x.horaire]=x.etat;
  });
+
+ // Détecter les jours ayant au moins un pointage
+ const joursActifs = {};
+ dates.forEach(d => {
+  joursActifs[d] = data.some(x => x.date === d && (normalize(x.etat).includes("present") || normalize(x.etat).includes("absent")));
+ });
+
+ /* TABLE PC */
+ let h1=`<tr><th rowspan="2">Nom</th>`;
+ let h2=`<tr>`;
+ 
+ dates.forEach(d=>{
+  if(joursActifs[d]){
+   h1+=`<th colspan="${creneaux.length}">${formatDateAvecJour(d)}</th>`;
+   creneaux.forEach(c=> h2+=`<th>${c}</th>`);
+  } else {
+   h1+=`<th rowspan="2" style="background:#111;color:#666">${formatDateAvecJour(d)}</th>`;
+  }
+ });
+ h1+=`</tr>`; h2+=`</tr>`;
+ tableHead.innerHTML=h1+h2;
 
  tableBody.innerHTML=Object.values(grp).map(g=>{
   let r=`<tr><td class="stg-link" onclick="voirDetails('${g.id}')">${g.nom}</td>`;
-  dates.forEach(d=>creneaux.forEach(c=>{
-   const e=(g.etats[d+"_"+c]||"-").trim();
-   let css="";
-   if(e.toLowerCase().includes("présent")||e.toLowerCase().includes("present")) css="color-present";
-   else if(e.toLowerCase().includes("absent")) css="color-absent";
-   r+=`<td><span class="badge ${css}">${e}</span></td>`;
-  }));
+  dates.forEach(d=>{
+   if(joursActifs[d]){
+    creneaux.forEach(c=>{
+     const raw=g.etats[d+"_"+c]||"-";
+     const v=normalize(raw);
+     let css="";
+     if(v.includes("present")) css="color-present";
+     else if(v.includes("absent")) css="color-absent";
+     r+=`<td><span class="badge ${css}">${raw}</span></td>`;
+    });
+   } else {
+    r+=`<td style="background:#111;color:#444">-</td>`;
+   }
+  });
   return r+="</tr>";
  }).join("");
 
- // ====================== MOBILE VIEW ======================
- if(window.innerWidth <= 768){
+ /* MOBILE */
+ if(window.innerWidth<=768){
   mobileView.innerHTML=Object.values(grp).map(g=>{
-    let html=`<div class="card-stagiaire"><div class="card-header" onclick="voirDetails('${g.id}')">${g.nom}</div>`;
-    dates.forEach(d=>{
-     html+=`<div class="card-date">${formatDateAvecJour(d)}</div>`;
+   let html=`<div class="card-stagiaire">
+    <div class="card-header" onclick="voirDetails('${g.id}')">${g.nom}</div>`;
+   dates.forEach(d=>{
+    html+=`<div class="card-date">${formatDateAvecJour(d)}</div>`;
+    if(joursActifs[d]){
      creneaux.forEach(c=>{
-      const e=(g.etats[d+"_"+c]||"-").trim();
+      const raw=g.etats[d+"_"+c]||"-";
+      const v=normalize(raw);
       let css="";
-      if(e.toLowerCase().includes("présent")||e.toLowerCase().includes("present")) css="color-present";
-      else if(e.toLowerCase().includes("absent")) css="color-absent";
-      html+=`<div class="slot"><span>${c}</span><span class="badge ${css}">${e}</span></div>`;
+      if(v.includes("present")) css="color-present";
+      else if(v.includes("absent")) css="color-absent";
+      html+=`<div class="slot"><span>${c}</span><span class="badge ${css}">${raw}</span></div>`;
      });
-    });
-    return html+="</div>";
+    } else {
+     html+=`<div class="slot" style="color:#555 italic"><span>Journée vide</span><span>-</span></div>`;
+    }
+   });
+   return html+="</div>";
   }).join("");
  } else {
-  mobileView.innerHTML = ""; // vider les cartes en PC
+  mobileView.innerHTML="";
  }
 }
 
-// Mettre à jour la vue si redimensionnement
-window.addEventListener("resize", () => {
- appliquerFiltres();
-});
-
 function voirDetails(id){
- const stats=toutesLesDonnees.filter(d=>d.id==id);
- const pres=stats.filter(d=>d.etat.toLowerCase().includes("présent")||d.etat.toLowerCase().includes("present")).length;
- const abs=stats.filter(d=>d.etat.toLowerCase().includes("absent")).length;
- const taux=(pres+abs)>0?((pres/(pres+abs))*100).toFixed(1):0;
- document.getElementById("m-nom").textContent=stats[0].nom;
- document.getElementById("m-pres").textContent=pres;
- document.getElementById("m-abs").textContent=abs;
- document.getElementById("m-taux").textContent=taux;
- modal.style.display="block";overlay.style.display="block";
+ const s=toutesLesDonnees.filter(x=>x.id==id);
+ let p=0,a=0;
+ s.forEach(x=>{
+  const v=normalize(x.etat);
+  if(v.includes("present")) p++;
+  else if(v.includes("absent")) a++;
+ });
+ const t=(p+a)?((p/(p+a))*100).toFixed(1):0;
+ m_nom.textContent=s[0].nom;
+ m_pres.textContent=p;
+ m_abs.textContent=a;
+ m_taux.textContent=t;
+ overlay.style.display=modal.style.display="block";
 }
 
-function closeModal(){modal.style.display="none";overlay.style.display="none"}
+function closeModal(){overlay.style.display=modal.style.display="none"}
 
 function exportToExcel(){
-  const wb = XLSX.utils.book_new();
-  const ws = {};
-  const table = document.getElementById("main-table");
-  const rows = table.querySelectorAll("tr");
+ const table=document.getElementById("main-table");
+ const wb=XLSX.utils.book_new();
+ const ws=XLSX.utils.table_to_sheet(table,{raw:true});
 
-  const header1 = rows[0].querySelectorAll("th"); // ligne dates
-  const header2 = rows[1].querySelectorAll("th"); // ligne créneaux
-
-  ws['!merges'] = [];
-  ws["A1"] = {v:"Nom", t:"s", s:{font:{bold:true}}};
-  ws['!merges'].push({s:{r:0,c:0}, e:{r:1,c:0}});
-
-  let colIndex = 1;
-  header1.forEach((th,i)=>{
-    if(i===0) return;
-    const colspan = parseInt(th.getAttribute("colspan")) || 1;
-    const dateText = th.innerText;
-    const ref = XLSX.utils.encode_cell({r:0,c:colIndex});
-    ws[ref] = {
-      v: dateText,
-      t: "s",
-      s:{font:{bold:true,color:{rgb:"000000"}},alignment:{horizontal:"center",vertical:"center"},fill:{fgColor:{rgb:"D9D9D9"}}}
-    };
-    if(colspan>1){
-      ws['!merges'].push({s:{r:0,c:colIndex}, e:{r:0,c:colIndex+colspan-1}});
-    }
-    colIndex += colspan;
-  });
-
-  header2.forEach((th,i)=>{
-    const ref = XLSX.utils.encode_cell({r:1,c:i+1});
-    ws[ref] = {v: th.innerText, t:"s", s:{font:{bold:true}}};
-  });
-
-  let rowStart = 2;
-  for(let r=2; r<rows.length; r++){
-    const cells = rows[r].querySelectorAll("td");
-    cells.forEach((cell,c)=>{
-      const ref = XLSX.utils.encode_cell({r:rowStart,c:c});
-      const value = cell.innerText;
-      ws[ref] = {v:value, t:"s"};
-      const valLower = value.toLowerCase();
-      if(valLower.includes("présent") || valLower.includes("present")){
-        ws[ref].s={fill:{fgColor:{rgb:"C6EFCE"}},font:{bold:true}};
-      } else if(valLower.includes("absent")){
-        ws[ref].s={fill:{fgColor:{rgb:"FFC7CE"}},font:{bold:true}};
-      }
-    });
-    rowStart++;
+ const range=XLSX.utils.decode_range(ws["!ref"]);
+ for(let r=range.s.r+2;r<=range.e.r;r++){
+  for(let c=range.s.c+1;c<=range.e.c;c++){
+   const cell=ws[XLSX.utils.encode_cell({r,c})];
+   if(!cell||!cell.v) continue;
+   const v=normalize(cell.v.toString());
+   if(v.includes("present")){
+    cell.s={fill:{fgColor:{rgb:"C6EFCE"}},font:{bold:true}};
+   }else if(v.includes("absent")){
+    cell.s={fill:{fgColor:{rgb:"FFC7CE"}},font:{bold:true}};
+   }
   }
+ }
 
-  let totalCols = 1;
-  header1.forEach((th,i)=>{if(i!==0) totalCols += parseInt(th.getAttribute("colspan")) || 1;});
-  ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:rowStart-1,c:totalCols-1}});
-  XLSX.utils.book_append_sheet(wb, ws, "Pointage");
-
-  function clean(str){return str.replace(/[\\/:*?"<>|]/g,"").replace(/\s+/g,"_");}
-  const specValue = spec.value || "Toutes_Spécialités";
-  const startDate = start.value || "Début";
-  const endDate = end.value || "Fin";
-  const fileName = `Pointage_${clean(specValue)}_${startDate}_au_${endDate}.xlsx`;
-  XLSX.writeFile(wb, fileName, {cellStyles:true});
+ XLSX.utils.book_append_sheet(wb,ws,"Pointage");
+ XLSX.writeFile(wb,`Pointage_${spec.value}_${start.value}_au_${end.value}.xlsx`,{cellStyles:true});
 }
 
 chargerInitial();
 filter.onclick=filtrer;
 search.oninput=appliquerFiltres;
 overlay.onclick=closeModal;
+window.addEventListener("resize",appliquerFiltres);
 </script>
 
 </body>
