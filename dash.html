@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Pointage</title>
+<title>Dashboard Pointage Pro - Sam-Ven</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
@@ -35,7 +35,6 @@ h1{text-align:center;color:var(--primary)}
  border-radius:12px
 }
 
-/* CONTROLS */
 #controls{
  display:flex;
  flex-wrap:wrap;
@@ -70,7 +69,6 @@ button{
  margin-left:auto
 }
 
-/* LOADER */
 #loader{
  display:none;
  margin:20px auto;
@@ -83,7 +81,6 @@ button{
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* TABLE PC */
 .table-wrapper{
  overflow-x:auto;
  border:1px solid #333
@@ -127,7 +124,6 @@ tbody td:first-child{
  min-width:200px
 }
 
-/* BADGES */
 .badge{
  padding:5px 10px;
  border-radius:4px;
@@ -152,7 +148,6 @@ tbody td:first-child{
  text-decoration:underline
 }
 
-/* MODAL */
 #overlay{
  display:none;
  position:fixed;
@@ -172,54 +167,22 @@ tbody td:first-child{
  border-radius:15px;
  border:2px solid var(--primary);
  z-index:1000;
- text-align:center
+ text-align:center;
+ min-width: 300px;
 }
 
-/* MOBILE */
 .mobile-cards{display:none}
 
 @media(max-width:768px){
-
  body{padding:10px}
  h1{font-size:20px}
-
  #controls{flex-direction:column}
-
  .table-wrapper{display:none}
-
- .mobile-cards{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  margin-top:15px
- }
-
- .card-stagiaire{
-  background:#1b1b1b;
-  border:1px solid #333;
-  border-radius:12px;
-  padding:12px
- }
-
- .card-header{
-  font-weight:bold;
-  font-size:16px;
-  color:var(--primary)
- }
-
- .card-date{
-  margin-top:8px;
-  font-size:13px;
-  color:#aaa;
-  border-top:1px solid #333;
-  padding-top:6px
- }
-
- .slot{
-  display:flex;
-  justify-content:space-between;
-  font-size:13px
- }
+ .mobile-cards{display:flex;flex-direction:column;gap:12px;margin-top:15px}
+ .card-stagiaire{background:#1b1b1b;border:1px solid #333;border-radius:12px;padding:12px}
+ .card-header{font-weight:bold;font-size:16px;color:var(--primary)}
+ .card-date{margin-top:8px;font-size:13px;color:#aaa;border-top:1px solid #333;padding-top:6px}
+ .slot{display:flex;justify-content:space-between;font-size:13px}
 }
 </style>
 </head>
@@ -229,14 +192,13 @@ tbody td:first-child{
 <h1>Dashboard Pointage</h1>
 
 <div id="table-container">
-
  <div id="controls">
   <input type="date" id="start">
   <input type="date" id="end">
   <select id="spec"><option value="">-- Spécialité --</option></select>
   <input id="search" placeholder="Nom...">
   <button id="filter">🔍 FILTRER</button>
-  <button class="btn-excel" onclick="exportToExcel()">📊 EXPORT</button>
+  <button class="btn-excel" onclick="exportToExcel()">📊 EXPORT PAR SEMAINE</button>
  </div>
 
  <div id="loader"></div>
@@ -249,7 +211,6 @@ tbody td:first-child{
  </div>
 
  <div id="mobile-view" class="mobile-cards"></div>
-
 </div>
 
 <div id="overlay"></div>
@@ -276,6 +237,13 @@ const search=document.getElementById("search");
 const loader=document.getElementById("loader");
 const mobileView=document.getElementById("mobile-view");
 
+const overlay = document.getElementById("overlay");
+const modal = document.getElementById("modal");
+const m_nom = document.getElementById("m-nom");
+const m_pres = document.getElementById("m-pres");
+const m_abs = document.getElementById("m-abs");
+const m_taux = document.getElementById("m-taux");
+
 function normalize(v){
  return (v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 }
@@ -290,8 +258,8 @@ function formatDateAvecJour(d){
 function getDatesBetween(s,e){
  const dates=[];
  let d=new Date(s);
- const end=new Date(e);
- while(d<=end){
+ const last=new Date(e);
+ while(d<=last){
   dates.push(
    String(d.getDate()).padStart(2,"0")+"/"+
    String(d.getMonth()+1).padStart(2,"0")+"/"+
@@ -303,17 +271,21 @@ function getDatesBetween(s,e){
 }
 
 async function chargerInitial(){
- const r=await fetch(API_URL);
- const d=await r.json();
- if(d.specialites) d.specialites.forEach(s=>spec.add(new Option(s,s)));
+ try {
+  const r=await fetch(API_URL);
+  const d=await r.json();
+  if(d.specialites) d.specialites.forEach(s=>spec.add(new Option(s,s)));
+ } catch(e) { console.error("Erreur chargement spécialités", e); }
 }
 
 async function filtrer(){
  if(!start.value||!end.value) return alert("Choisir les dates");
  loader.style.display="block";
- const r=await fetch(`${API_URL}?start=${start.value}&end=${end.value}&spec=${spec.value}`);
- const d=await r.json();
- toutesLesDonnees=d.pointage||[];
+ try {
+  const r=await fetch(`${API_URL}?start=${start.value}&end=${end.value}&spec=${spec.value}`);
+  const d=await r.json();
+  toutesLesDonnees=d.pointage||[];
+ } catch(e) { alert("Erreur de connexion"); }
  loader.style.display="none";
  appliquerFiltres();
 }
@@ -327,22 +299,18 @@ function appliquerFiltres(){
 function afficherDonnees(data){
  const dates=getDatesBetween(start.value,end.value);
  const grp={};
-
  data.forEach(x=>{
   if(!grp[x.id]) grp[x.id]={nom:x.nom,id:x.id,etats:{}};
   grp[x.id].etats[x.date+"_"+x.horaire]=x.etat;
  });
 
- // Détecter les jours ayant au moins un pointage
  const joursActifs = {};
  dates.forEach(d => {
   joursActifs[d] = data.some(x => x.date === d && (normalize(x.etat).includes("present") || normalize(x.etat).includes("absent")));
  });
 
- /* TABLE PC */
  let h1=`<tr><th rowspan="2">Nom</th>`;
  let h2=`<tr>`;
- 
  dates.forEach(d=>{
   if(joursActifs[d]){
    h1+=`<th colspan="${creneaux.length}">${formatDateAvecJour(d)}</th>`;
@@ -362,8 +330,7 @@ function afficherDonnees(data){
      const raw=g.etats[d+"_"+c]||"-";
      const v=normalize(raw);
      let css="";
-     if(v.includes("present")) css="color-present";
-     else if(v.includes("absent")) css="color-absent";
+     if(v.includes("present")) css="color-present"; else if(v.includes("absent")) css="color-absent";
      r+=`<td><span class="badge ${css}">${raw}</span></td>`;
     });
    } else {
@@ -373,11 +340,9 @@ function afficherDonnees(data){
   return r+="</tr>";
  }).join("");
 
- /* MOBILE */
  if(window.innerWidth<=768){
   mobileView.innerHTML=Object.values(grp).map(g=>{
-   let html=`<div class="card-stagiaire">
-    <div class="card-header" onclick="voirDetails('${g.id}')">${g.nom}</div>`;
+   let html=`<div class="card-stagiaire"><div class="card-header" onclick="voirDetails('${g.id}')">${g.nom}</div>`;
    dates.forEach(d=>{
     html+=`<div class="card-date">${formatDateAvecJour(d)}</div>`;
     if(joursActifs[d]){
@@ -385,64 +350,151 @@ function afficherDonnees(data){
       const raw=g.etats[d+"_"+c]||"-";
       const v=normalize(raw);
       let css="";
-      if(v.includes("present")) css="color-present";
-      else if(v.includes("absent")) css="color-absent";
+      if(v.includes("present")) css="color-present"; else if(v.includes("absent")) css="color-absent";
       html+=`<div class="slot"><span>${c}</span><span class="badge ${css}">${raw}</span></div>`;
      });
     } else {
-     html+=`<div class="slot" style="color:#555 italic"><span>Journée vide</span><span>-</span></div>`;
+     html+=`<div class="slot" style="color:#555; font-style:italic"><span>Journée vide</span><span>-</span></div>`;
     }
    });
    return html+="</div>";
   }).join("");
- } else {
-  mobileView.innerHTML="";
- }
+ } else { mobileView.innerHTML=""; }
 }
 
 function voirDetails(id){
- const s=toutesLesDonnees.filter(x=>x.id==id);
+ const s=toutesLesDonnees.filter(x=>String(x.id)===String(id));
+ if(s.length === 0) return;
  let p=0,a=0;
  s.forEach(x=>{
   const v=normalize(x.etat);
-  if(v.includes("present")) p++;
-  else if(v.includes("absent")) a++;
+  if(v.includes("present")) p++; else if(v.includes("absent")) a++;
  });
  const t=(p+a)?((p/(p+a))*100).toFixed(1):0;
  m_nom.textContent=s[0].nom;
  m_pres.textContent=p;
  m_abs.textContent=a;
  m_taux.textContent=t;
- overlay.style.display=modal.style.display="block";
+ overlay.style.display="block";
+ modal.style.display="block";
 }
 
-function closeModal(){overlay.style.display=modal.style.display="none"}
+function closeModal(){
+ overlay.style.display="none";
+ modal.style.display="none";
+}
 
-function exportToExcel(){
- const table=document.getElementById("main-table");
- const wb=XLSX.utils.book_new();
- const ws=XLSX.utils.table_to_sheet(table,{raw:true});
+// LOGIQUE EXPORT MULTI-FEUILLES AMELIOREE
+function exportToExcel() {
+  if(!toutesLesDonnees.length) return alert("Aucune donnée à exporter");
+  const wb = XLSX.utils.book_new();
+  const dates = getDatesBetween(start.value, end.value);
+  
+  // 1. RECAPITULATIF
+  const recapData = [["Nom du Stagiaire", "Présences", "Absences", "Taux de Présence (%)"]];
+  const grpGlobal = {};
+  toutesLesDonnees.forEach(x => {
+    if(!grpGlobal[x.id]) grpGlobal[x.id] = {nom: x.nom, p:0, a:0};
+    const v = normalize(x.etat);
+    if(v.includes("present")) grpGlobal[x.id].p++;
+    else if(v.includes("absent")) grpGlobal[x.id].a++;
+  });
+  Object.values(grpGlobal).forEach(g => {
+    const taux = (g.p + g.a) > 0 ? ((g.p / (g.p+g.a)) * 100).toFixed(1) : 0;
+    recapData.push([g.nom, g.p, g.a, taux]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(recapData), "RECAPITULATIF");
 
- const range=XLSX.utils.decode_range(ws["!ref"]);
- for(let r=range.s.r+2;r<=range.e.r;r++){
-  for(let c=range.s.c+1;c<=range.e.c;c++){
-   const cell=ws[XLSX.utils.encode_cell({r,c})];
-   if(!cell||!cell.v) continue;
-   const v=normalize(cell.v.toString());
-   if(v.includes("present")){
-    cell.s={fill:{fgColor:{rgb:"C6EFCE"}},font:{bold:true}};
-   }else if(v.includes("absent")){
-    cell.s={fill:{fgColor:{rgb:"FFC7CE"}},font:{bold:true}};
-   }
-  }
- }
+  // 2. GROUPEMENT PAR SEMAINE (SAM-VEN)
+  const semaines = {};
+  dates.forEach(d => {
+    const [day, month, year] = d.split("/");
+    const dateObj = new Date(year, month - 1, day);
+    const dayInWeek = dateObj.getDay();
+    let diffToSamedi = dayInWeek === 6 ? 0 : -(dayInWeek + 1);
+    const samedi = new Date(new Date(dateObj).setDate(dateObj.getDate() + diffToSamedi));
+    const vendredi = new Date(new Date(samedi).setDate(samedi.getDate() + 6));
+    const nomSemaine = `Du ${samedi.getDate()}-${samedi.getMonth()+1} au ${vendredi.getDate()}-${vendredi.getMonth()+1}`;
+    if (!semaines[nomSemaine]) semaines[nomSemaine] = [];
+    semaines[nomSemaine].push(d);
+  });
 
- XLSX.utils.book_append_sheet(wb,ws,"Pointage");
- XLSX.writeFile(wb,`Pointage_${spec.value}_${start.value}_au_${end.value}.xlsx`,{cellStyles:true});
+  // 3. CREATION DES FEUILLES
+  Object.keys(semaines).forEach(nom => {
+    const datesS = semaines[nom];
+    const joursActifsS = {};
+    datesS.forEach(d => {
+      joursActifsS[d] = toutesLesDonnees.some(x => x.date === d && (normalize(x.etat).includes("present") || normalize(x.etat).includes("absent")));
+    });
+
+    const exportAOA = [];
+    const h1 = ["Nom"];
+    const h2 = [""];
+    const merges = [];
+
+    let currentCol = 1;
+    datesS.forEach(d => {
+      h1.push(formatDateAvecJour(d));
+      if(joursActifsS[d]){
+        merges.push({ s: { r: 0, c: currentCol }, e: { r: 0, c: currentCol + creneaux.length - 1 } });
+        creneaux.forEach(c => { h2.push(c); });
+        for(let i=1; i<creneaux.length; i++) h1.push("");
+        currentCol += creneaux.length;
+      } else {
+        h2.push("-");
+        currentCol += 1;
+      }
+    });
+    exportAOA.push(h1, h2);
+
+    const grp = {};
+    toutesLesDonnees.forEach(x => {
+      if(!grp[x.id]) grp[x.id] = {nom: x.nom, etats: {}};
+      grp[x.id].etats[x.date + "_" + x.horaire] = x.etat;
+    });
+
+    Object.values(grp).forEach(g => {
+      const row = [g.nom];
+      datesS.forEach(d => {
+        if(joursActifsS[d]){
+          creneaux.forEach(c => row.push(g.etats[d + "_" + c] || "-"));
+        } else {
+          row.push("-");
+        }
+      });
+      exportAOA.push(row);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(exportAOA);
+    ws['!merges'] = merges;
+
+    // STYLES
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let r = 0; r <= range.e.r; r++) {
+      for (let c = 0; c <= range.e.c; c++) {
+        const cell = ws[XLSX.utils.encode_cell({r, c})];
+        if(!cell) continue;
+        cell.s = { alignment: { horizontal: "center", vertical: "center" }, border: { top: {style:"thin"}, bottom: {style:"thin"}, left: {style:"thin"}, right: {style:"thin"} } };
+        
+        if(r < 2) {
+          cell.s.fill = { fgColor: { rgb: "EFEFEF" } };
+          cell.s.font = { bold: true };
+        } else if (c > 0) {
+          const v = normalize(cell.v.toString());
+          if(v.includes("present")) cell.s.fill = { fgColor: { rgb: "C6EFCE" } };
+          else if(v.includes("absent")) cell.s.fill = { fgColor: { rgb: "FFC7CE" } };
+          else if(cell.v === "-") cell.s.font = { color: { rgb: "999999" } };
+        }
+      }
+    }
+    XLSX.utils.book_append_sheet(wb, ws, nom.substring(0,31));
+  });
+
+  XLSX.writeFile(wb, `Pointage_${spec.value}_${start.value}_au_${end.value}.xlsx`, {cellStyles:true});
 }
 
 chargerInitial();
-filter.onclick=filtrer;
+document.getElementById("filter").onclick=filtrer;
 search.oninput=appliquerFiltres;
 overlay.onclick=closeModal;
 window.addEventListener("resize",appliquerFiltres);
